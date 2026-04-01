@@ -132,6 +132,20 @@ describe('generateTSV()', () => {
     expect(lines[4]).toContain('Guten Tag')
   })
 
+  it('escapes formula-injection characters at cell start', () => {
+    const vocab = [
+      { Word: '=SUM(A1)', 'Literal Meaning': '+danger', 'Intended Meaning': '-risk', 'Part of Speech': '@here', 'Case Examples': '', Level: 'A1' },
+    ]
+    const tsv = generateTSV(vocab, [])
+    const dataLine = tsv.split('\n')[3]
+    // Front field starts with = → must be prefixed with '
+    expect(dataLine.startsWith("'=SUM(A1)")).toBe(true)
+    // Back field parts that start with + or - should also be prefixed
+    expect(dataLine).toContain("'+danger")
+    expect(dataLine).toContain("'-risk")
+    expect(dataLine).toContain("'@here")
+  })
+
   it('camelCase keys (from Claude output) are also supported', () => {
     const vocab = [{
       word: 'lernen',

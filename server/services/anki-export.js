@@ -20,7 +20,10 @@ function get(entry, titleKey, camelKey) {
 
 function escapeField(str) {
   // Tabs and newlines break TSV — replace with spaces
-  return (str || '').replace(/\t/g, ' ').replace(/\r?\n/g, ' ')
+  let s = (str || '').replace(/\t/g, ' ').replace(/\r?\n/g, ' ')
+  // Prevent spreadsheet formula injection (Excel/Sheets execute cells starting with = + - @)
+  if (/^[=+\-@]/.test(s)) s = "'" + s
+  return s
 }
 
 function vocabCard(entry) {

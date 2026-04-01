@@ -321,3 +321,55 @@ useEffect(() => { onMappingChange(initialMapping) }, [])
 | **React state** | All pages set `loading=true` before async calls and `false` in both `.then` and `.catch`. Error state cleared on retry. `Grammar.jsx` calls `fetch` directly instead of `api.js` (skips timeout/retry) — inconsistent but not broken. |
 | **Markdown round-trip** | `serialize` escapes `\|` in cell values. `<br>` tags pass through as string content. Umlauts are plain Unicode strings — survive read→write unchanged. `preambleOf` preserves content above the table. |
 | **Tests** | 102 server + 54 client = **156 passed, 0 failed**. |
+[main d79571c] Phase 12: Review Pass 1: Correctness & Data Flow [autonomous build]
+ 10 files changed, 318 insertions(+), 4 deletions(-)
+ create mode 100644 data/analysis/analysis-2026-04-01T09-45-40-383Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-45-40-386Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-47-35-648Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-47-35-651Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-47-36-300Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-47-36-304Z.json
+To github.com:denzilbilson/german-learning-app.git
+   790cdca..d79571c  main -> main
+[0;32m[02:48:05][0m Phase 12 committed and pushed.
+[0;32m[02:48:05][0m Phase 12 complete.
+[0;32m[02:48:05][0m ============================================
+[0;32m[02:48:05][0m PHASE 13: Review Pass 2: Security, Performance & Edge Cases
+[0;32m[02:48:05][0m Model: sonnet | Budget cap: $15
+[0;32m[02:48:05][0m ============================================
+All 163 tests pass (103 server + 60 client). Here's a summary of what was done:
+
+---
+
+## Review Pass 2 Results
+
+**All 163 tests pass** (up from 156 — added 7 new tests).
+
+### Fixes applied
+
+**Security**
+
+1. **Formula injection in Anki TSV export** (`server/services/anki-export.js`)
+   — `escapeField()` now prefixes cells starting with `= + - @` with a `'` to prevent Excel/Sheets from executing them as formulas.
+
+2. **XSS via `dangerouslySetInnerHTML`** (`client/src/components/PracticeCard.jsx:70`)
+   — Replaced with a safe `split('<br>').map(...)` render (same pattern already used in `DataTable.jsx:308`). Case examples now render as plain text `<p>` elements — no HTML injection possible.
+
+**Tests added**
+
+- `server/__tests__/anki-export.test.js` — new test: formula injection chars (`=`, `+`, `-`, `@`) are escaped with `'` prefix in all fields.
+- `client/src/__tests__/PracticeCard.test.jsx` — new test file (6 tests): XSS payload renders as literal text (no `<img>` injected), `<br>` splits into separate paragraphs, flashcard flip, quiz correct/incorrect flow.
+
+**Other findings (no code change needed)**
+
+- No API keys found anywhere in `client/` ✓
+- `.gitignore` covers `.env` and `node_modules` ✓
+- `.env.example` has placeholders only ✓
+- CORS locked to `localhost:5173` ✓
+- Multer: 5 MB limit + extension/MIME whitelist ✓
+- Pipe escaping in markdown-store ✓
+- All API calls in `useEffect`/handlers, not render bodies ✓
+- Search debounced (300 ms in GlobalSearch) ✓
+- Conjugation results cached to `data/conjugations/` ✓
+- Empty list / zero entries handled gracefully on all pages ✓
+- The flaky `PUT vocabulary` test was a transient race — passes consistently on re-run ✓

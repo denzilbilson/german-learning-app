@@ -65,10 +65,11 @@ function FlashCard({ question, onComplete }) {
               </p>
             )}
             {question.caseExamples && (
-              <p
-                className="text-secondary font-sans text-xs mt-4 text-center max-w-sm leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: question.caseExamples }}
-              />
+              <div className="text-secondary font-sans text-xs mt-4 text-center max-w-sm leading-relaxed space-y-0.5">
+                {String(question.caseExamples).split('<br>').map((ex, i) => (
+                  <p key={i}>{ex.trim()}</p>
+                ))}
+              </div>
             )}
           </div>
         )}
