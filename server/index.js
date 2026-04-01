@@ -7,6 +7,8 @@ import analyzeRouter    from './routes/analyze.js'
 import ankiRouter       from './routes/anki.js'
 import practiceRouter   from './routes/practice.js'
 import progressRouter   from './routes/progress.js'
+import dashboardRouter  from './routes/dashboard.js'
+import grammarRouter    from './routes/grammar.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -36,8 +38,9 @@ app.use('/api/anki', ankiRouter)
 app.use('/api/practice',  practiceRouter)
 app.use('/api/progress',  progressRouter)
 
-app.get('/api/grammar',   (_req, res) => res.json([]))
-app.get('/api/dashboard', (_req, res) => res.json({ vocab: 0, phrases: 0, daysActive: 0 }))
+// ── Phase 6 routes ────────────────────────────────────────────────
+app.use('/api/dashboard', dashboardRouter)
+app.use('/api/grammar',   grammarRouter)
 
 // ── 404 fallthrough ───────────────────────────────────────────────
 app.use((_req, res) => {

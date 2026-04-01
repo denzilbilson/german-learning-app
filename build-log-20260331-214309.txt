@@ -190,3 +190,37 @@ Phase 5 is complete. Here's what was built:
 
 - `server/index.js` — practice and progress routers registered at `/api/practice` and `/api/progress`
 [0;32m[22:23:04][0m Committing Phase 5: Practice Modes
+[0;32m[22:23:06][0m Phase 5 committed and pushed.
+[0;32m[22:23:06][0m Phase 5 complete.
+
+[0;32m[22:23:06][0m ============================================
+[0;32m[22:23:06][0m STARTING PHASE 6: Dashboard + Polish
+[0;32m[22:23:06][0m Budget limit: $20
+[0;32m[22:23:06][0m ============================================
+All files are in place. Phase 6 is complete. Here's a summary of everything built:
+
+---
+
+## Phase 6: Dashboard + Polish — Complete
+
+### New server files
+- **`server/routes/dashboard.js`** — `GET /api/dashboard` aggregates: total vocab/phrases, added this week/month, words-over-time (cumulative), level distribution (A1–C2), recent analyses (last 5), practice stats
+- **`server/routes/grammar.js`** — `GET /api/grammar` parses `data/grammar/rules.md` into JSON with normalized keys
+
+### Updated server
+- **`server/index.js`** — registers both new routers, replacing the inline stubs
+
+### New client files
+- **`client/src/components/Toast.jsx`** — context-based toast system with `useToast()` hook; supports `success`, `error`, `info`, `warning` variants; auto-dismiss; max 5 visible
+
+### Rewritten client pages
+- **`Dashboard.jsx`** — live data via `GET /api/dashboard`; 4 stat cards with skeleton loaders; Recharts `LineChart` (words over time) + `BarChart` (CEFR level distribution); recent analyses feed; quick action links; milestone progress checklist; rotating daily study tip
+- **`Grammar.jsx`** — collapsible cards organized by level; level filter pills with counts; search; animated expand/collapse for examples
+
+### Updated client
+- **`App.jsx`** — `ToastProvider` wraps everything; dark/light theme toggle persisted to `localStorage` (toggles `dark` class on `<html>`); collapsible mobile sidebar with hamburger + backdrop overlay; `MobileBar` top strip on small screens; page enter animations via `AnimatedRoutes`
+- **`index.css`** — `pageEnter` + `slideIn` keyframe animations; custom scrollbar; global `focus-visible` ring; light-mode base override
+
+### Docs
+- **`README.md`** — setup instructions, feature table, data layout, scripts reference
+[0;32m[22:44:23][0m Committing Phase 6: Dashboard + Polish
