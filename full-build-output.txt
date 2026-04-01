@@ -50,3 +50,65 @@ Everything looks great. Phase 1 is complete. Here's what was built:
 4. The frontend proxies all `/api/*` requests to the backend — no CORS issues in dev
 5. All 6 pages are navigable via the sidebar; Vocabulary and Phrases pages would render empty tables (stub endpoints return `[]` until Phase 2)
 [0;32m[21:46:42][0m Committing Phase 1: Scaffolding
+[main a3be35c] Phase 1: Scaffolding [autonomous build]
+ 29 files changed, 5961 insertions(+)
+ create mode 100644 .env.example
+ create mode 100644 CLAUDE.md
+ create mode 100644 build-log-20260331-214309.txt
+ create mode 100755 build-overnight.sh
+ create mode 100644 client/index.html
+ create mode 100644 client/package-lock.json
+ create mode 100644 client/package.json
+ create mode 100644 client/postcss.config.js
+ create mode 100644 client/src/App.jsx
+ create mode 100644 client/src/index.css
+ create mode 100644 client/src/main.jsx
+ create mode 100644 client/src/pages/Dashboard.jsx
+ create mode 100644 client/src/pages/Grammar.jsx
+ create mode 100644 client/src/pages/Phrases.jsx
+ create mode 100644 client/src/pages/Practice.jsx
+ create mode 100644 client/src/pages/TextAnalysis.jsx
+ create mode 100644 client/src/pages/Vocabulary.jsx
+ create mode 100644 client/tailwind.config.js
+ create mode 100644 client/vite.config.js
+ create mode 100644 data/grammar/rules.md
+ create mode 100644 data/phrases.md
+ create mode 100644 data/progress/log.md
+ create mode 100644 data/vocabulary.md
+ create mode 100644 full-build-output.txt
+ create mode 100644 package-lock.json
+ create mode 100644 package.json
+ create mode 100644 server/index.js
+ create mode 100644 server/package-lock.json
+ create mode 100644 server/package.json
+To github.com:denzilbilson/german-learning-app.git
+   e9c4984..a3be35c  main -> main
+[0;32m[21:46:43][0m Phase 1 committed and pushed.
+[0;32m[21:46:43][0m Phase 1 complete.
+[0;32m[21:46:43][0m ============================================
+[0;32m[21:46:43][0m STARTING PHASE 2: Data Layer + Database UI
+[0;32m[21:46:43][0m Budget limit: $20
+[0;32m[21:46:43][0m ============================================
+Phase 2 is complete. Here's what was built:
+
+---
+
+**Backend**
+
+- `server/services/markdown-store.js` — full Markdown table ↔ JSON parser with `getAll`, `getByIndex`, `add`, `update`, `remove`. Handles `<br>` in Case Examples naturally, preserves file preamble, auto-adds `Date Added`, supports `?level=`, `?search=`, `?since=` query filters.
+- `server/routes/vocabulary.js` + `server/routes/phrases.js` — complete CRUD routers (GET/POST/PUT/DELETE) wired to the markdown store.
+- `server/index.js` — updated to import and mount the real routers (stubs removed).
+
+**Frontend**
+
+- `client/src/services/api.js` — typed fetch wrapper with methods for all current and future endpoints.
+- `client/src/components/DataTable.jsx` — reusable table component with:
+  - Live search across all columns
+  - A1–C2 level filter pills
+  - Click-header sorting (asc/desc)
+  - Inline cell editing (click to edit, Enter/blur to save, Escape to cancel, `<select>` for options columns)
+  - Delete with inline confirm (No / Yes — no popup)
+  - Expandable rows (▸/▾ toggle) showing `<br>`-separated Case Examples
+- `client/src/pages/Vocabulary.jsx` — full page with DataTable, Add Word modal (all fields including Case Examples), colored POS badges, level badges, toast notifications.
+- `client/src/pages/Phrases.jsx` — same pattern, simpler form.
+[0;32m[21:57:13][0m Committing Phase 2: Data Layer + Database UI
