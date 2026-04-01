@@ -274,7 +274,7 @@ export default function DataTable({
                               <span className="text-xs text-secondary mr-0.5">Delete?</span>
                               <button
                                 onClick={() => { onDelete?.(oi); setConfirmDel(null) }}
-                                className="text-xs px-2 py-1 rounded bg-accent-red hover:brightness-110 text-white"
+                                className="text-xs px-2 py-1 rounded bg-accent-red hover:brightness-110 text-warm-50"
                               >
                                 Yes
                               </button>

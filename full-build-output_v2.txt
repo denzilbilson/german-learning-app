@@ -373,3 +373,79 @@ All 163 tests pass (103 server + 60 client). Here's a summary of what was done:
 - Conjugation results cached to `data/conjugations/` ✓
 - Empty list / zero entries handled gracefully on all pages ✓
 - The flaky `PUT vocabulary` test was a transient race — passes consistently on re-run ✓
+[main 1158c12] Phase 13: Review Pass 2: Security, Performance & Edge Cases [autonomous build]
+ 14 files changed, 441 insertions(+), 5 deletions(-)
+ create mode 100644 client/src/__tests__/PracticeCard.test.jsx
+ create mode 100644 data/analysis/analysis-2026-04-01T09-51-35-142Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-51-35-145Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-52-32-920Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-52-32-923Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-53-30-993Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-53-30-996Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-53-36-140Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-53-36-144Z.json
+To github.com:denzilbilson/german-learning-app.git
+   d79571c..1158c12  main -> main
+[0;32m[02:53:55][0m Phase 13 committed and pushed.
+[0;32m[02:53:55][0m Phase 13 complete.
+[0;32m[02:53:55][0m ============================================
+[0;32m[02:53:55][0m PHASE 14: Final Review: Polish & Verification (Opus)
+[0;32m[02:53:55][0m Model: opus | Budget cap: $20
+[0;32m[02:53:55][0m ============================================
+All tests pass. Here's the complete final quality review report:
+
+---
+
+## Final Quality Review Report
+
+### Test Results
+- **Server:** 10 test files, 103 tests — **ALL PASSING**
+- **Client:** 8 test files, 60 tests — **ALL PASSING**
+- **Total:** 18 test files, 163 test cases, **all green**
+
+### Fix Applied
+- `DataTable.jsx:277` — Changed `text-white` to `text-warm-50` on delete confirmation button (the only instance of pure white in the entire frontend)
+
+### Checklist — All Verified
+
+| Check | Status |
+|-------|--------|
+| **Dark theme consistent** | All pages use `bg-primary`/`bg-secondary` via CSS vars. No stray shades. |
+| **Heading font (`font-display`)** | Global CSS rule `h1-h6 { @apply font-display }` + explicit `font-display` on all page titles and section headings. No exceptions. |
+| **Body font (`font-sans`)** | All content, labels, inputs, buttons use `font-sans`. Consistent. |
+| **Text warm off-white** | CSS var `--text-primary: #F0EDE6`. No `#fff`, no `text-white` remaining. |
+| **`accent-gold` for interactives** | All buttons, active states, focus rings, highlights use `accent-gold`. No Tailwind blue/indigo defaults found. |
+| **Cards consistent** | All cards: `bg-secondary rounded-xl border border-warm-800`. Same padding pattern everywhere. |
+| **Buttons consistent** | Same `rounded-xl`/`rounded-lg`, same `bg-accent-gold text-primary` for primary, same `bg-tertiary` for secondary. |
+| **Inputs consistent** | Same `bg-tertiary border-warm-700 rounded-lg focus:ring-accent-gold/40` everywhere. |
+| **Loading states** | Skeleton (`animate-pulse`) for data pages, spinner for async ops. Consistent pattern. |
+| **Error states** | Same `bg-accent-red/10 border-accent-red/30 rounded-xl` with retry button on all pages. |
+| **Empty states** | Same centered text pattern on Dashboard, Vocabulary, Phrases, Grammar, Sessions. |
+| **Sidebar active state** | `bg-accent-gold/10 text-accent-gold border-l-2 border-accent-gold` via NavLink `isActive`. All 8 pages in sidebar. |
+| **Toast position** | Fixed `bottom-6 right-6 z-[100]`. Consistent. |
+| **GenderBadge on nouns** | Present in: Vocabulary table (PosBadge), AnalysisReader vocab section, PracticeCard (flashcard + article-drill). |
+| **SpeakButton on German text** | Present in: Vocabulary table (WordCell), Phrases table (PhraseCell), AnalysisReader (translations + vocab + phrases), PracticeCard (all modes). |
+| **GermanKeyboard on inputs** | Present in: TextAnalysis, Vocabulary page + AddModal, Phrases page + AddModal. DataTable inline edit is too small for keyboard bar — acceptable. |
+| **Article Drill in Practice** | Yes — 6th mode in MODES array, accessible from Practice page. |
+| **Cmd+K global search** | Global `keydown` listener in AppShell, works on all pages. |
+| **Navigation URLs** | All 8 sidebar NavLinks + `/vocabulary?highlight=` deep-link support in GlobalSearch. Catch-all redirects to `/`. |
+| **Responsive** | Sidebar: `fixed` on mobile, `lg:relative` on desktop. Tables: `overflow-x-auto`. Mobile bar at `lg:hidden`. |
+| **All imports resolve** | All pages, components, services imported correctly. |
+| **All routes registered** | 11 route modules mounted in `server/index.js`. |
+| **Error handling on every API call** | All pages have try/catch with toast.error or error state. |
+| **German characters (ä ö ü ß)** | UTF-8 throughout. GermanKeyboard component for input. Anki export test verifies encoding. |
+| **Long compounds** | Tables use `overflow-x-auto` + `truncate` where needed. |
+| **Docs match code** | README structure tree matches actual files. All listed API routes exist. `.env.example` has both vars. |
+| **.env in .gitignore** | Yes — `.env` and `.env.local` both listed. |
+| **No API keys in code** | `ANTHROPIC_API_KEY` only in server-side `process.env` and test setup. Not exposed to frontend. |
+| **No stray console.log** | Zero in app code (client has none; server has only operational logging via `console.log` for request timing and startup). |
+
+### Architecture Quality Notes
+- CSS custom properties (`--bg-primary`, `--text-primary`, etc.) with light-mode overrides ensure theme consistency
+- Global `*:focus-visible` rule uses `accent-gold` for all focus rings
+- Google Fonts loaded in `index.html` with `preconnect` for performance
+- ErrorBoundary wraps every route in `AnimatedRoutes`
+- API service has timeout, retry on 5xx, and structured error handling
+- Toast system via React context, bottom-right stacked, max 5 visible
+
+**Ship-ready. One cosmetic fix applied (`text-white` → `text-warm-50`). All 163 tests pass.**
