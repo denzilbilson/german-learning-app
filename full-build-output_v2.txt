@@ -93,3 +93,60 @@ Added "Import ↑" to the sidebar nav.
 **Conjugation helper** — `POST /api/vocabulary/conjugate` calls Claude for Präsens/Präteritum/Perfekt/Konjunktiv II, caches JSON in `data/conjugations/`. Vocabulary table shows a `conj` button on verbs — clicking opens an inline modal with a full conjugation grid.
 
 **Article Drill** — 6th practice mode (client-side, no AI call). Loads nouns from vocabulary, strips article, shows 4 colored buttons (der/die/das/plural). Correct → button flashes its gender color + ✓; incorrect → button flashes red, correct answer highlights in its gender color. Auto-advances after 1.2s.
+[main 5c282fa] Phase 8: Bulk Import + German-Specific UX [autonomous build]
+ 20 files changed, 1728 insertions(+), 43 deletions(-)
+ create mode 100644 client/src/components/GenderBadge.jsx
+ create mode 100644 client/src/components/GermanKeyboard.jsx
+ create mode 100644 client/src/components/SpeakButton.jsx
+ create mode 100644 client/src/pages/Import.jsx
+ create mode 100644 server/prompts/conjugate-verb.js
+ create mode 100644 server/routes/import.js
+To github.com:denzilbilson/german-learning-app.git
+   044e1d1..5c282fa  main -> main
+[0;32m[00:03:53][0m Phase 8 committed and pushed.
+[0;32m[00:03:53][0m Phase 8 complete.
+[0;32m[00:03:53][0m ============================================
+[0;32m[00:03:53][0m PHASE 9: Global Search + Session History
+[0;32m[00:03:53][0m Model: sonnet | Budget cap: $18
+[0;32m[00:03:53][0m ============================================
+Everything looks good. Here's a summary of what was built:
+
+---
+
+## Feature A: Global Search
+
+**`server/routes/search.js`** — `GET /api/search?q=&type=`
+- Searches vocabulary (word, meanings, case examples), phrases, grammar rules, and analysis JSON files
+- German char equivalence: `ä↔ae`, `ö↔oe`, `ü↔ue`, `ß↔ss` (applied to both query and content)
+- Relevance scoring: exact match (3) > starts-with (2) > contains (1)
+- Grouped results, 20 per type max, empty query → 400
+
+**`client/src/components/GlobalSearch.jsx`**
+- `Cmd+K` / `Ctrl+K` opens modal anywhere in the app (listener in `AppShell`)
+- Auto-focused input with accent-gold bottom border on focus
+- Debounced 300ms, loading spinner during fetch
+- Results grouped by category with icons (📖 Vocabulary, 💬 Phrases, § Grammar, 🔍 Analyses)
+- Match highlighted in `text-accent-gold` within title and snippet
+- Keyboard nav: `↑↓` navigate, `Enter` to go, `Escape` to close
+- Recent searches persisted to `localStorage` (5 max), shown when input is empty
+- Navigates to `/vocabulary?highlight=word`, `/phrases?highlight=phrase`, `/grammar?highlight=topic`
+
+**`client/src/App.jsx`** — Search button with `⌘K` hint in sidebar, search icon in mobile bar, `History` nav item (`◷`), `/history` route registered
+
+---
+
+## Feature B: Session History Browser
+
+**`server/routes/progress.js`** (updated) — `POST /api/progress` now saves a full session JSON to `data/progress/sessions/YYYY-MM-DD-HHMMSS.json` with all question detail, plus continues appending the summary row to `log.md`
+
+**`server/routes/sessions.js`**
+- `GET /api/sessions` — paginated list (newest first), returns summaries only
+- `GET /api/sessions/weak-words` — aggregates all incorrect answers across sessions: word, timesSeen, timesWrong, errorRate, lastMissedDate
+- `GET /api/sessions/:id` — full session detail with questions array
+- `DELETE /api/sessions/:id`
+
+**`client/src/pages/SessionHistory.jsx`**
+- **Sessions tab**: filter bar (mode dropdown + This week / This month / All time), session cards showing score badge (green/gold/red by threshold), mode badge, duration, click to expand full question-by-question detail with correct/wrong indicators, collapsible explanations, "Words to review" linking to `/vocabulary?highlight=`
+- **Weak Words tab**: sortable table (word, times seen, times wrong, error rate color-coded, last missed), links to vocabulary entries, "Practice Weak Words" button
+
+**`client/src/pages/Practice.jsx`** (updated) — `questionStartRef` tracks start time per question; `handleAnswer` enriches each result with `timeMs`, `questionText`, `correctAnswer`; full `questions` array and `weakWords` are sent to `logProgress`

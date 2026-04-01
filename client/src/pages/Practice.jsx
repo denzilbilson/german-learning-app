@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../services/api.js'
 import PracticeCard from '../components/PracticeCard.jsx'
@@ -181,6 +181,9 @@ export default function Practice() {
   const [sessionStart, setSessionStart] = useState(null)
   const [error, setError]             = useState(null)
 
+  // Track time per question
+  const questionStartRef = useRef(null)
+
   async function startSession(selectedMode) {
     setMode(selectedMode)
     setError(null)
@@ -201,7 +204,6 @@ export default function Practice() {
           setPhase('select')
           return
         }
-        // Build questions — shuffle, take up to count
         const shuffled = [...nouns].sort(() => Math.random() - 0.5).slice(0, cfg.count)
         const qs = shuffled.map(row => ({
           type:    'article-drill',
@@ -210,7 +212,7 @@ export default function Practice() {
           pos:     row['Part of Speech'] || '',
           word:    row.Word || '',
           meaning: row['Intended Meaning'] || row['Literal Meaning'] || '',
-        })).filter(q => q.answer) // only nouns we can detect gender for
+        })).filter(q => q.answer)
 
         if (qs.length < 3) {
           setError('Not enough nouns with detectable gender. Make sure Part of Speech includes (m.), (f.), or (n.).')
@@ -222,6 +224,7 @@ export default function Practice() {
         setCurrentIdx(0)
         setAnswers([])
         setSessionStart(Date.now())
+        questionStartRef.current = Date.now()
         setPhase('session')
       } catch (err) {
         setError(err.message)
@@ -236,6 +239,7 @@ export default function Practice() {
       setCurrentIdx(0)
       setAnswers([])
       setSessionStart(Date.now())
+      questionStartRef.current = Date.now()
       setPhase('session')
     } catch (err) {
       setError(err.message)
@@ -248,17 +252,48 @@ export default function Practice() {
   }
 
   function handleAnswer(result) {
-    const next = [...answers, result]
+    // Enrich with time and question detail
+    const q       = questions[currentIdx]
+    const timeMs  = questionStartRef.current ? Date.now() - questionStartRef.current : 0
+    const enriched = {
+      ...result,
+      timeMs,
+      questionText:  q.front || q.question || q.sentence || q.english || q.prompt || '',
+      correctAnswer: q.answer || q.back || '',
+    }
+    questionStartRef.current = Date.now() // reset for next question
+
+    const next = [...answers, enriched]
     setAnswers(next)
 
     if (currentIdx + 1 < questions.length) {
       setCurrentIdx(currentIdx + 1)
     } else {
-      const elapsed = Math.max(1, Math.round((Date.now() - sessionStart) / 60000))
-      const score   = next.filter(a => a.correct).length
-      const modeLabel = MODES.find(m => m.id === mode)?.label ?? mode
-      api.logProgress({ mode: modeLabel, score, total: next.length, duration: elapsed })
-        .catch(() => {}) // silent — progress logging is non-critical
+      const elapsed    = Math.max(1, Math.round((Date.now() - sessionStart) / 60000))
+      const durationMs = Date.now() - sessionStart
+      const score      = next.filter(a => a.correct).length
+      const modeLabel  = MODES.find(m => m.id === mode)?.label ?? mode
+      const weakWords  = next.filter(a => !a.correct).map(a => a.word).filter(Boolean)
+
+      const sessionQuestions = next.map(a => ({
+        question:      a.questionText  || '',
+        userAnswer:    a.userAnswer    || '',
+        correctAnswer: a.correctAnswer || '',
+        correct:       a.correct,
+        explanation:   a.explanation   || '',
+        timeMs:        a.timeMs        || 0,
+        word:          a.word          || '',
+      }))
+
+      api.logProgress({
+        mode:      modeLabel,
+        score,
+        total:     next.length,
+        duration:  elapsed,
+        durationMs,
+        questions: sessionQuestions,
+        weakWords,
+      }).catch(() => {}) // silent — progress logging is non-critical
 
       setPhase('summary')
       const pct = Math.round((score / next.length) * 100)

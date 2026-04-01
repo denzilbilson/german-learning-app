@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import { BrowserRouter, Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom'
-import Dashboard    from './pages/Dashboard.jsx'
-import TextAnalysis from './pages/TextAnalysis.jsx'
-import Vocabulary   from './pages/Vocabulary.jsx'
-import Phrases      from './pages/Phrases.jsx'
-import Practice     from './pages/Practice.jsx'
-import Grammar      from './pages/Grammar.jsx'
-import Import       from './pages/Import.jsx'
+import Dashboard      from './pages/Dashboard.jsx'
+import TextAnalysis   from './pages/TextAnalysis.jsx'
+import Vocabulary     from './pages/Vocabulary.jsx'
+import Phrases        from './pages/Phrases.jsx'
+import Practice       from './pages/Practice.jsx'
+import Grammar        from './pages/Grammar.jsx'
+import Import         from './pages/Import.jsx'
+import SessionHistory from './pages/SessionHistory.jsx'
+import GlobalSearch   from './components/GlobalSearch.jsx'
 import { ToastProvider } from './components/Toast.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import { GenderLegend } from './components/GenderBadge.jsx'
@@ -18,6 +20,7 @@ const NAV_ITEMS = [
   { to: '/phrases',    label: 'Phrases',    icon: '❝' },
   { to: '/practice',   label: 'Practice',   icon: '◈' },
   { to: '/grammar',    label: 'Grammar',    icon: '§'  },
+  { to: '/history',    label: 'History',    icon: '◷'  },
   { to: '/import',     label: 'Import',     icon: '↑'  },
 ]
 
@@ -56,7 +59,15 @@ function CloseIcon() {
   )
 }
 
-function Sidebar({ theme, onToggleTheme, mobileOpen, onClose }) {
+function SearchIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  )
+}
+
+function Sidebar({ theme, onToggleTheme, mobileOpen, onClose, onOpenSearch }) {
   return (
     <>
       {mobileOpen && (
@@ -77,7 +88,7 @@ function Sidebar({ theme, onToggleTheme, mobileOpen, onClose }) {
         `}
       >
         {/* Logo */}
-        <div className="mb-10 px-2 flex items-start justify-between">
+        <div className="mb-6 px-2 flex items-start justify-between">
           <div>
             <h1 className="font-display text-xl font-semibold text-primary leading-tight">
               Deutsch<br />
@@ -93,6 +104,18 @@ function Sidebar({ theme, onToggleTheme, mobileOpen, onClose }) {
             <CloseIcon />
           </button>
         </div>
+
+        {/* Search button */}
+        <button
+          onClick={() => { onClose(); onOpenSearch() }}
+          className="flex items-center gap-2 mx-2 mb-5 px-3 py-2 bg-tertiary border border-warm-700 rounded-lg text-secondary hover:text-primary hover:border-warm-600 transition-colors group"
+        >
+          <SearchIcon />
+          <span className="flex-1 text-xs font-sans text-left">Search…</span>
+          <kbd className="text-warm-700 text-xs font-sans bg-secondary border border-warm-700 rounded px-1 group-hover:border-warm-600">
+            ⌘K
+          </kbd>
+        </button>
 
         {/* Navigation */}
         <nav className="flex flex-col gap-1">
@@ -136,7 +159,7 @@ function Sidebar({ theme, onToggleTheme, mobileOpen, onClose }) {
   )
 }
 
-function MobileBar({ onOpenMenu }) {
+function MobileBar({ onOpenMenu, onOpenSearch }) {
   return (
     <div className="lg:hidden fixed top-0 left-0 right-0 z-10 h-14 bg-secondary/95 backdrop-blur border-b border-warm-800 flex items-center px-4 gap-3">
       <button
@@ -149,6 +172,13 @@ function MobileBar({ onOpenMenu }) {
       <span className="font-display text-base font-semibold text-primary">
         Deutsch <span className="text-accent-gold">Lernen</span>
       </span>
+      <button
+        onClick={onOpenSearch}
+        className="ml-auto text-secondary hover:text-primary"
+        aria-label="Search"
+      >
+        <SearchIcon />
+      </button>
     </div>
   )
 }
@@ -164,6 +194,7 @@ function AnimatedRoutes() {
         <Route path="/phrases"    element={<ErrorBoundary><Phrases /></ErrorBoundary>} />
         <Route path="/practice"   element={<ErrorBoundary><Practice /></ErrorBoundary>} />
         <Route path="/grammar"    element={<ErrorBoundary><Grammar /></ErrorBoundary>} />
+        <Route path="/history"    element={<ErrorBoundary><SessionHistory /></ErrorBoundary>} />
         <Route path="/import"     element={<ErrorBoundary><Import /></ErrorBoundary>} />
         <Route path="*"           element={<Navigate to="/" replace />} />
       </Routes>
@@ -171,47 +202,69 @@ function AnimatedRoutes() {
   )
 }
 
-export default function App() {
-  const [theme, setTheme] = useState(() => {
+// Global Cmd+K handler — lives inside BrowserRouter so GlobalSearch can use navigate
+function AppShell() {
+  const [theme, setTheme]           = useState(() => {
     try { return localStorage.getItem('theme') || 'dark' } catch { return 'dark' }
   })
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen]   = useState(false)
+  const [searchOpen,  setSearchOpen]    = useState(false)
 
   useEffect(() => {
     const root = document.documentElement
-    if (theme === 'dark') {
-      root.classList.add('dark')
-    } else {
-      root.classList.remove('dark')
-    }
+    if (theme === 'dark') root.classList.add('dark')
+    else root.classList.remove('dark')
     try { localStorage.setItem('theme', theme) } catch {}
   }, [theme])
+
+  // Global Cmd+K / Ctrl+K
+  useEffect(() => {
+    function onKey(e) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setSearchOpen(o => !o)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   const toggleTheme  = useCallback(() => setTheme(t => t === 'dark' ? 'light' : 'dark'), [])
   const closeSidebar = useCallback(() => setSidebarOpen(false), [])
   const openSidebar  = useCallback(() => setSidebarOpen(true), [])
+  const openSearch   = useCallback(() => setSearchOpen(true), [])
+  const closeSearch  = useCallback(() => setSearchOpen(false), [])
 
+  return (
+    <div
+      className="flex min-h-screen font-sans"
+      style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}
+    >
+      <Sidebar
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        mobileOpen={sidebarOpen}
+        onClose={closeSidebar}
+        onOpenSearch={openSearch}
+      />
+
+      <div className="flex-1 flex flex-col min-w-0">
+        <MobileBar onOpenMenu={openSidebar} onOpenSearch={openSearch} />
+        <main className="flex-1 overflow-auto pt-14 lg:pt-0">
+          <AnimatedRoutes />
+        </main>
+      </div>
+
+      <GlobalSearch isOpen={searchOpen} onClose={closeSearch} />
+    </div>
+  )
+}
+
+export default function App() {
   return (
     <BrowserRouter>
       <ToastProvider>
-        <div
-          className="flex min-h-screen font-sans"
-          style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}
-        >
-          <Sidebar
-            theme={theme}
-            onToggleTheme={toggleTheme}
-            mobileOpen={sidebarOpen}
-            onClose={closeSidebar}
-          />
-
-          <div className="flex-1 flex flex-col min-w-0">
-            <MobileBar onOpenMenu={openSidebar} />
-            <main className="flex-1 overflow-auto pt-14 lg:pt-0">
-              <AnimatedRoutes />
-            </main>
-          </div>
-        </div>
+        <AppShell />
       </ToastProvider>
     </BrowserRouter>
   )

@@ -152,4 +152,13 @@ export const api = {
 
   // ── Conjugation ───────────────────────────────────────────────
   conjugateVerb: (verb)     => req('POST', '/vocabulary/conjugate', { verb }),
+
+  // ── Search ────────────────────────────────────────────────────
+  search: (q, type = 'all') => req('GET', '/search' + qs({ q, type })),
+
+  // ── Sessions ──────────────────────────────────────────────────
+  getSessions:   (params)   => req('GET',    '/sessions' + qs(params)),
+  getSession:    (id)        => req('GET',    `/sessions/${id}`),
+  deleteSession: (id)        => req('DELETE', `/sessions/${id}`),
+  getWeakWords:  ()          => req('GET',    '/sessions/weak-words'),
 }

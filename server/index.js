@@ -13,6 +13,8 @@ import progressRouter   from './routes/progress.js'
 import dashboardRouter  from './routes/dashboard.js'
 import grammarRouter    from './routes/grammar.js'
 import importRouter     from './routes/import.js'
+import searchRouter     from './routes/search.js'
+import sessionsRouter   from './routes/sessions.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DATA_DIR  = resolve(__dirname, '../data')
@@ -27,6 +29,7 @@ async function ensureDataDirs() {
     resolve(DATA_DIR, 'anki'),
     resolve(DATA_DIR, 'grammar'),
     resolve(DATA_DIR, 'progress'),
+    resolve(DATA_DIR, 'progress/sessions'),
     resolve(DATA_DIR, 'conjugations'),
   ]
   await Promise.all(dirs.map(d => mkdir(d, { recursive: true })))
@@ -78,6 +81,10 @@ app.use('/api/grammar',   grammarRouter)
 
 // ── Phase 8 routes ────────────────────────────────────────────────
 app.use('/api/import', importRouter)
+
+// ── Feature: Search + Sessions ────────────────────────────────────
+app.use('/api/search',   searchRouter)
+app.use('/api/sessions', sessionsRouter)
 
 // ── 404 fallthrough ───────────────────────────────────────────────
 app.use((_req, res) => {
