@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../services/api.js'
 import { useToast } from '../components/Toast.jsx'
@@ -138,8 +138,9 @@ function MappingStep({ headers, vocabMapping, phraseMapping, preview, target, on
     onMappingChange(next)
   }
 
-  // Notify parent on mount
-  useState(() => { onMappingChange(initialMapping) })
+  // Notify parent on mount (useEffect avoids setState-during-render React warning)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { onMappingChange(initialMapping) }, [])
 
   const previewCols = headers.slice(0, 6)
 

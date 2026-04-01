@@ -1,0 +1,29 @@
+{
+  "vocabulary": [
+    {
+      "word": "Vorstellung",
+      "literalMeaning": "presentation",
+      "intendedMeaning": "idea",
+      "partOfSpeech": "Nomen",
+      "caseExamples": [],
+      "level": "B1"
+    }
+  ],
+  "phrases": [
+    {
+      "phrase": "Wie geht es?",
+      "englishMeaning": "How are you?",
+      "level": "A1"
+    }
+  ],
+  "grammar": [
+    {
+      "topic": "Dative",
+      "explanation": "Used for indirect object"
+    }
+  ],
+  "translation": "Translation",
+  "source": null,
+  "originalText": "Ich bin ein Berliner.",
+  "savedAt": "2026-04-01T09:47:35.648Z"
+}

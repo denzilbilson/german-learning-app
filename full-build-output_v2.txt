@@ -233,3 +233,91 @@ npm test                          # both
 cd server && npm test             # server only
 cd client && npm test             # client only
 ```
+[main 790cdca] Phase 11: Comprehensive Test Suite [autonomous build]
+ 41 files changed, 7425 insertions(+), 82 deletions(-)
+ create mode 100644 client/src/__tests__/DataTable.test.jsx
+ create mode 100644 client/src/__tests__/GenderBadge.test.jsx
+ create mode 100644 client/src/__tests__/GermanKeyboard.test.jsx
+ create mode 100644 client/src/__tests__/GlobalSearch.test.jsx
+ create mode 100644 client/src/__tests__/Import.test.jsx
+ create mode 100644 client/src/__tests__/Practice.test.jsx
+ create mode 100644 client/src/__tests__/TextAnalysis.test.jsx
+ create mode 100644 client/src/__tests__/setup.js
+ create mode 100644 client/vitest.config.js
+ create mode 100644 data/analysis/analysis-2026-04-01T09-26-09-863Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-26-09-866Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-26-16-615Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-26-16-618Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-29-07-741Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-29-07-743Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-29-13-360Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-29-13-362Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-29-18-391Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-29-18-394Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-30-11-919Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-30-11-922Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-39-28-355Z.json
+ create mode 100644 data/analysis/analysis-2026-04-01T09-39-28-357Z.json
+ create mode 100644 server/__tests__/analyze.test.js
+ create mode 100644 server/__tests__/anki-export.test.js
+ create mode 100644 server/__tests__/anki-route.test.js
+ create mode 100644 server/__tests__/claude-service.test.js
+ create mode 100644 server/__tests__/markdown-store.test.js
+ create mode 100644 server/__tests__/phrases.test.js
+ create mode 100644 server/__tests__/practice.test.js
+ create mode 100644 server/__tests__/search.test.js
+ create mode 100644 server/__tests__/sessions.test.js
+ create mode 100644 server/__tests__/vocabulary.test.js
+ create mode 100644 server/vitest.config.js
+To github.com:denzilbilson/german-learning-app.git
+   5a7673d..790cdca  main -> main
+[0;32m[02:39:51][0m Phase 11 committed and pushed.
+[0;32m[02:39:51][0m Phase 11 complete.
+[0;32m[02:39:51][0m ============================================
+[0;32m[02:39:51][0m PHASE 12: Review Pass 1: Correctness & Data Flow
+[0;32m[02:39:52][0m Model: sonnet | Budget cap: $15
+[0;32m[02:39:52][0m ============================================
+102 server + 54 client = 156 tests, all passing. Here's the complete review summary:
+
+---
+
+## Review Pass 1 — Correctness: Findings
+
+### Bugs Fixed
+
+**1. `client/src/services/api.js:84` — Double `res.json()` stream exhaustion**
+```js
+// BEFORE (broken):
+try { msg = (await res.json()).message || (await res.json()).error } catch { ... }
+
+// AFTER (fixed):
+try { const d = await res.json(); msg = d.message || d.error } catch { ... }
+```
+`Response.body` is a one-shot readable stream. The second `await res.json()` would throw "body already used" whenever `.message` was falsy (i.e., the server returned `{ error: '...' }` without a `message` key — the standard shape used by every route). Anki export failures would silently show a blank error message.
+
+**2. `client/src/pages/Import.jsx:142` — `useState` used as an effect trigger**
+```js
+// BEFORE (broken):
+useState(() => { onMappingChange(initialMapping) })
+
+// AFTER (fixed):
+useEffect(() => { onMappingChange(initialMapping) }, [])
+```
+`useState` initializers run during render. Calling `onMappingChange` (which is the parent's `setMapping`) during `MappingStep`'s render caused React's *"Cannot update a component while rendering a different component"* warning, which indicates a possible tear in React's render/commit cycle. Changed to `useEffect` (runs post-render) and replaced the unused `useCallback` import with `useEffect`.
+
+---
+
+### No Other Correctness Issues Found
+
+| Check | Result |
+|---|---|
+| **Imports** | Every import resolves. No `require()`. No circular deps. `access` unused in `markdown-store.js` and `writeFile` unused in `sessions.js` — harmless dead imports, not bugs. |
+| **API contracts** | All 19 `api.js` functions map 1:1 to registered routes in `index.js`. Methods, paths, body shapes, and response shapes match exactly. |
+| **Analysis flow** | `POST /analyze` → Claude → save JSON → render in `AnalysisReader` → `POST /analyze/add` → dedup → `store.add` → toast ✓ |
+| **Anki flow** | `AnkiExportModal` → `api.exportAnki` → `POST /anki/export` → `generateTSV` → `Content-Disposition: attachment` → `triggerDownload(blob)` ✓ |
+| **Practice flow** | Mode select → `generatePractice` → `PracticeCard` → `checkAnswer` (Claude modes) or local eval (quiz/flashcard) → `logProgress` → summary ✓ |
+| **Import flow** | File → `POST /import/csv` → `MappingStep` → `TargetStep` → `POST /import/confirm` → dedup → `store.add` → toast → navigate ✓ |
+| **Search flow** | `GET /api/search?q=&type=` → all four content types searched in parallel → results grouped by type → `handleSelect` → `navigate` with `?highlight=` ✓ |
+| **React state** | All pages set `loading=true` before async calls and `false` in both `.then` and `.catch`. Error state cleared on retry. `Grammar.jsx` calls `fetch` directly instead of `api.js` (skips timeout/retry) — inconsistent but not broken. |
+| **Markdown round-trip** | `serialize` escapes `\|` in cell values. `<br>` tags pass through as string content. Umlauts are plain Unicode strings — survive read→write unchanged. `preambleOf` preserves content above the table. |
+| **Tests** | 102 server + 54 client = **156 passed, 0 failed**. |

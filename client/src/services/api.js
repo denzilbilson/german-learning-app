@@ -81,7 +81,7 @@ async function download(method, path, body) {
 
   if (!res.ok) {
     let msg
-    try { msg = (await res.json()).message || (await res.json()).error } catch {
+    try { const d = await res.json(); msg = d.message || d.error } catch {
       msg = await res.text().catch(() => '')
     }
     throw new Error(msg || `HTTP ${res.status}`)
