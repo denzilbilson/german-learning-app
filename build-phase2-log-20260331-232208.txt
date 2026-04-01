@@ -163,3 +163,43 @@ Everything is done. Here's a summary of what was created and modified:
 - **`server/services/anki-export.js`** — expanded file header and full JSDoc on `generateTSV` including card format description
 - **All 11 route files** — header comment listing every endpoint with method, path, and description
 - **9 component files** — full doc comments on `DataTable`, `AnalysisReader`, `PracticeCard`, `GlobalSearch`, `GenderBadge`, `SpeakButton`, `GermanKeyboard`, `ErrorBoundary`, `Toast`
+[0;32m[02:09:24][0m Phase 10 committed and pushed.
+[0;32m[02:09:24][0m Phase 10 complete.
+
+[0;32m[02:09:24][0m ============================================
+[0;32m[02:09:24][0m PHASE 11: Comprehensive Test Suite
+[0;32m[02:09:24][0m Model: sonnet | Budget cap: $22
+[0;32m[02:09:24][0m ============================================
+All 156 tests pass across both server and client.
+
+**Server** — 102 tests in 10 files:
+- `markdown-store.test.js` — file I/O, round-trips, edge cases
+- `claude-service.test.js` — mocked SDK, retry/error paths
+- `anki-export.test.js` — TSV generation, encoding
+- `vocabulary.test.js` — full CRUD via supertest
+- `phrases.test.js` — mirror of vocabulary
+- `analyze.test.js` — analysis flow, deduplication
+- `anki-route.test.js` — download headers, content-type
+- `practice.test.js` — generate + check answer
+- `search.test.js` — filtering, German char normalization
+- `sessions.test.js` — pagination, weak words
+
+**Client** — 54 tests in 7 files:
+- `DataTable.test.jsx` — sort, filter, inline edit, delete confirmation
+- `GenderBadge.test.jsx` — detectGender() + badge colors
+- `GlobalSearch.test.jsx` — Ctrl+K, debounced search, navigation
+- `GermanKeyboard.test.jsx` — char insertion, toggle visibility
+- `TextAnalysis.test.jsx` — phases, submit guard, error state
+- `Practice.test.jsx` — mode select, session flow, summary
+- `Import.test.jsx` — wizard steps, file upload, confirm
+
+**Two fixes made during the run:**
+1. Color assertions in `GenderBadge.test.jsx` converted to `rgb()` format (jsdom normalizes hex → rgb)
+2. `Import.test.jsx` step-transition queries switched to `findAllByText` since step labels appear in both the stepper nav and heading simultaneously
+
+Run tests anytime with:
+```
+npm test                          # both
+cd server && npm test             # server only
+cd client && npm test             # client only
+```
