@@ -287,3 +287,18 @@ All files are in place. Phase 6 is complete. Here's a summary of everything buil
 ### Docs
 - **`README.md`** — setup instructions, feature table, data layout, scripts reference
 [0;32m[22:44:23][0m Committing Phase 6: Dashboard + Polish
+[main 9127e15] Phase 6: Dashboard + Polish [autonomous build]
+ 11 files changed, 1201 insertions(+), 115 deletions(-)
+ create mode 100644 README.md
+ create mode 100644 client/src/components/Toast.jsx
+ create mode 100644 server/routes/dashboard.js
+ create mode 100644 server/routes/grammar.js
+To github.com:denzilbilson/german-learning-app.git
+   c3c53af..9127e15  main -> main
+[0;32m[22:44:24][0m Phase 6 committed and pushed.
+[0;32m[22:44:24][0m Phase 6 complete.
+[0;32m[22:44:24][0m ============================================
+[0;32m[22:44:24][0m ALL PHASES COMPLETE
+[0;32m[22:44:24][0m Check your GitHub repo for the results.
+[0;32m[22:44:24][0m Full log: build-log-20260331-214309.txt
+[0;32m[22:44:24][0m ============================================

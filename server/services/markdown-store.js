@@ -1,9 +1,28 @@
-import { readFile as fsRead, writeFile as fsWrite } from 'fs/promises'
+import { readFile as fsRead, writeFile as fsWrite, access, mkdir } from 'fs/promises'
 import { fileURLToPath } from 'url'
-import { dirname, resolve } from 'path'
+import { dirname, resolve, basename } from 'path'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 export const DATA_DIR = resolve(__dirname, '../../data')
+
+// ── Default headers by filename ───────────────────────────────────
+
+const DEFAULT_HEADERS = {
+  'vocabulary.md': ['Word', 'Literal Meaning', 'Intended Meaning', 'Part of Speech', 'Case Examples', 'Level', 'Source', 'Date Added'],
+  'phrases.md':    ['Phrase', 'English Meaning', 'Level', 'Source', 'Date Added'],
+  'log.md':        ['Date', 'Mode', 'Score', 'Total', 'Duration', 'Notes'],
+}
+
+function headersFor(filepath) {
+  const name = basename(filepath)
+  return DEFAULT_HEADERS[name] || ['Item', 'Value']
+}
+
+function emptyTable(headers) {
+  const hRow = '| ' + headers.join(' | ') + ' |'
+  const sep  = '|' + headers.map(h => '-'.repeat(h.length + 2)).join('|') + '|'
+  return hRow + '\n' + sep + '\n'
+}
 
 // ── Parsing helpers ───────────────────────────────────────────────
 
@@ -15,9 +34,9 @@ function isSeparator(cells) {
   return cells.length > 0 && cells.every(c => /^[-: ]+$/.test(c))
 }
 
-function parse(content) {
+function parse(content, filepath) {
   const tableLines = content.split('\n').filter(l => l.trim().startsWith('|'))
-  if (tableLines.length < 2) return { headers: [], rows: [] }
+  if (tableLines.length < 2) return { headers: headersFor(filepath), rows: [] }
 
   const headers = splitRow(tableLines[0])
   const rows = []
@@ -25,7 +44,10 @@ function parse(content) {
   for (const line of tableLines.slice(1)) {
     const cells = splitRow(line)
     if (isSeparator(cells)) continue
-    if (cells.length !== headers.length) continue
+    if (cells.length !== headers.length) {
+      console.warn(`[markdown-store] Skipping malformed row in ${basename(filepath)}: "${line.slice(0, 60)}…"`)
+      continue
+    }
     const obj = {}
     headers.forEach((h, i) => { obj[h] = cells[i] })
     rows.push(obj)
@@ -36,34 +58,64 @@ function parse(content) {
 
 function preambleOf(content) {
   const lines = content.split('\n')
-  const idx = lines.findIndex(l => l.trim().startsWith('|'))
+  const idx   = lines.findIndex(l => l.trim().startsWith('|'))
   return idx > 0 ? lines.slice(0, idx).join('\n') : ''
 }
 
 function serialize(headers, rows) {
+  const escapeCell = (v) => String(v ?? '').replace(/\|/g, '\\|')
   const hRow  = '| ' + headers.join(' | ') + ' |'
   const sep   = '|' + headers.map(h => '-'.repeat(h.length + 2)).join('|') + '|'
   const dRows = rows.map(r =>
-    '| ' + headers.map(h => String(r[h] ?? '')).join(' | ') + ' |'
+    '| ' + headers.map(h => escapeCell(r[h])).join(' | ') + ' |'
   )
   return [hRow, sep, ...dRows].join('\n')
 }
 
-// ── Internal I/O ──────────────────────────────────────────────────
+// ── Internal I/O with auto-create ─────────────────────────────────
+
+async function ensureDir(filepath) {
+  const dir = dirname(filepath)
+  await mkdir(dir, { recursive: true })
+}
 
 async function readMd(filepath) {
-  const content = await fsRead(filepath, 'utf-8')
-  const preamble = preambleOf(content)
-  const { headers, rows } = parse(content)
-  return { preamble, headers, rows }
+  try {
+    const content  = await fsRead(filepath, 'utf-8')
+    const preamble = preambleOf(content)
+    const { headers, rows } = parse(content, filepath)
+    return { preamble, headers, rows }
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      // File not found — auto-create with correct headers
+      const headers = headersFor(filepath)
+      await ensureDir(filepath)
+      await fsWrite(filepath, emptyTable(headers), 'utf-8')
+      console.log(`[markdown-store] Created missing file: ${basename(filepath)}`)
+      return { preamble: '', headers, rows: [] }
+    }
+    throw err
+  }
 }
 
 async function writeMd(filepath, preamble, headers, rows) {
+  await ensureDir(filepath)
   const body = serialize(headers, rows)
   await fsWrite(filepath, (preamble ? preamble + '\n' : '') + body + '\n', 'utf-8')
 }
 
 const today = () => new Date().toISOString().slice(0, 10)
+
+// ── Validation ────────────────────────────────────────────────────
+
+function validateEntry(headers, entry) {
+  for (const h of headers) {
+    if (entry[h] === undefined) continue
+    if (typeof entry[h] !== 'string' && typeof entry[h] !== 'number') {
+      throw new Error(`Field "${h}" must be a string (got ${typeof entry[h]})`)
+    }
+  }
+}
 
 // ── Public CRUD API ───────────────────────────────────────────────
 
@@ -91,7 +143,8 @@ export async function getAll(filepath, query = {}) {
 
 export async function getByIndex(filepath, idx) {
   const { rows } = await readMd(filepath)
-  return (idx >= 0 && idx < rows.length) ? rows[idx] : null
+  if (idx < 0 || idx >= rows.length) return null
+  return rows[idx]
 }
 
 export async function add(filepath, entries) {
@@ -99,8 +152,9 @@ export async function add(filepath, entries) {
   const list = Array.isArray(entries) ? entries : [entries]
 
   const newRows = list.map(e => {
+    validateEntry(headers, e)
     const r = {}
-    headers.forEach(h => { r[h] = e[h] ?? '' })
+    headers.forEach(h => { r[h] = e[h] != null ? String(e[h]) : '' })
     if (headers.includes('Date Added') && !r['Date Added']) r['Date Added'] = today()
     return r
   })
@@ -111,7 +165,10 @@ export async function add(filepath, entries) {
 
 export async function update(filepath, idx, data) {
   const { preamble, headers, rows } = await readMd(filepath)
-  if (idx < 0 || idx >= rows.length) throw new Error(`Row ${idx} out of range`)
+  if (idx < 0 || idx >= rows.length) {
+    throw new Error(`Row ${idx} is out of range (${rows.length} rows in ${basename(filepath)})`)
+  }
+  validateEntry(headers, data)
   rows[idx] = { ...rows[idx], ...data }
   await writeMd(filepath, preamble, headers, rows)
   return rows[idx]
@@ -119,7 +176,9 @@ export async function update(filepath, idx, data) {
 
 export async function remove(filepath, idx) {
   const { preamble, headers, rows } = await readMd(filepath)
-  if (idx < 0 || idx >= rows.length) throw new Error(`Row ${idx} out of range`)
+  if (idx < 0 || idx >= rows.length) {
+    throw new Error(`Row ${idx} is out of range (${rows.length} rows in ${basename(filepath)})`)
+  }
   const [removed] = rows.splice(idx, 1)
   await writeMd(filepath, preamble, headers, rows)
   return removed

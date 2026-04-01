@@ -1,32 +1,27 @@
 import { useState } from 'react'
 import { api } from '../services/api.js'
+import { useToast } from '../components/Toast.jsx'
 import AnalysisReader from '../components/AnalysisReader.jsx'
 import AnkiExportModal from '../components/AnkiExportModal.jsx'
 
+const MAX_CHARS = 5000
+
 export default function TextAnalysis() {
-  const [phase, setPhase]               = useState('idle')   // idle | loading | done
-  const [text, setText]                 = useState('')
-  const [source, setSource]             = useState('')
-  const [analysis, setAnalysis]         = useState(null)
+  const toast = useToast()
+
+  const [phase, setPhase]                     = useState('idle')
+  const [text, setText]                       = useState('')
+  const [source, setSource]                   = useState('')
+  const [analysis, setAnalysis]               = useState(null)
   const [selectedVocab, setSelectedVocab]     = useState(new Set())
   const [selectedPhrases, setSelectedPhrases] = useState(new Set())
-  const [toast, setToast]               = useState(null)
-  const [addLoading, setAddLoading]     = useState(false)
-  const [showAnki,  setShowAnki]        = useState(false)
-
-  // ── Helpers ───────────────────────────────────────────────────────
-
-  function showToast(type, msg) {
-    setToast({ type, msg })
-    setTimeout(() => setToast(null), 4000)
-  }
+  const [addLoading, setAddLoading]           = useState(false)
+  const [showAnki, setShowAnki]               = useState(false)
 
   function selectAll(result) {
     setSelectedVocab(new Set((result.vocabulary || []).map((_, i) => i)))
     setSelectedPhrases(new Set((result.phrases || []).map((_, i) => i)))
   }
-
-  // ── Handlers ──────────────────────────────────────────────────────
 
   async function handleAnalyze() {
     if (!text.trim()) return
@@ -37,14 +32,14 @@ export default function TextAnalysis() {
       selectAll(result)
       setPhase('done')
     } catch (err) {
-      showToast('error', err.message || 'Analysis failed — check your API key and try again')
+      toast.error(err.message || 'Analysis failed — check your API key and try again')
       setPhase('idle')
     }
   }
 
   async function handleAdd(vocabList, phraseList) {
     if (vocabList.length === 0 && phraseList.length === 0) {
-      showToast('error', 'Nothing selected to add')
+      toast.warning('Nothing selected to add')
       return
     }
     setAddLoading(true)
@@ -64,12 +59,12 @@ export default function TextAnalysis() {
       if (skipped.phrases > 0)    skippedParts.push(`${skipped.phrases} phrase${skipped.phrases !== 1 ? 's' : ''}`)
 
       const msg = addedParts.length > 0
-        ? `Added ${addedParts.join(' and ')}${skippedParts.length > 0 ? ` · ${skippedParts.join(' & ')} already in database` : ''}`
+        ? `Added ${addedParts.join(' and ')}${skippedParts.length > 0 ? ` · ${skippedParts.join(' & ')} already saved` : ''}`
         : `Nothing new — ${skippedParts.join(' and ')} already in database`
 
-      showToast('success', msg)
+      toast.success(msg)
     } catch (err) {
-      showToast('error', err.message || 'Failed to add entries')
+      toast.error(err.message || 'Failed to add entries')
     } finally {
       setAddLoading(false)
     }
@@ -92,54 +87,69 @@ export default function TextAnalysis() {
     setSelectedPhrases(new Set())
   }
 
+  const inputCls = 'w-full bg-secondary border border-warm-700 rounded-xl px-4 py-3.5 text-primary placeholder-warm-600 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-accent-gold/40 focus:border-accent-gold/60'
+
   // ── Idle state ────────────────────────────────────────────────────
 
   if (phase === 'idle') {
+    const charCount   = text.length
+    const overLimit   = charCount > MAX_CHARS
+    const nearLimit   = charCount > MAX_CHARS * 0.8 && !overLimit
+
     return (
       <div className="flex flex-col items-center justify-center min-h-full py-16 px-6">
         <div className="w-full max-w-2xl">
-          <h1 className="font-display text-4xl text-stone-100 mb-2">Analyze German Text</h1>
-          <p className="text-stone-400 text-sm mb-10 leading-relaxed">
+          <h1 className="font-display text-4xl text-primary mb-2">Analyze German Text</h1>
+          <p className="text-secondary text-sm mb-10 leading-relaxed">
             Paste any German text — an article, a passage, a conversation — and get a complete
             linguistic breakdown: translations, vocabulary, phrases, and grammar notes calibrated
             for B1→B2 level.
           </p>
 
           <div className="space-y-4">
-            <textarea
-              value={text}
-              onChange={e => setText(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleAnalyze()
-              }}
-              placeholder="Deutschen Text hier einfügen…"
-              rows={10}
-              className="w-full bg-stone-900 border border-stone-700/80 rounded-xl px-4 py-3.5
-                text-stone-100 placeholder-stone-600 text-sm leading-relaxed
-                focus:outline-none focus:border-yellow-500/50 resize-none transition-colors"
-            />
+            <div className="relative">
+              <textarea
+                value={text}
+                onChange={e => setText(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && text.trim()) handleAnalyze()
+                }}
+                placeholder="Deutschen Text hier einfügen…"
+                rows={10}
+                className={`${inputCls} resize-none ${overLimit ? 'border-accent-red/60 focus:ring-accent-red/30' : ''}`}
+              />
+              <div className={`absolute bottom-3 right-4 text-xs font-sans ${
+                overLimit ? 'text-accent-red' : nearLimit ? 'text-accent-gold' : 'text-warm-600'
+              }`}>
+                {charCount.toLocaleString()} / {MAX_CHARS.toLocaleString()}
+              </div>
+            </div>
+
+            {overLimit && (
+              <p className="text-accent-red text-xs font-sans">
+                Text exceeds {MAX_CHARS.toLocaleString()} characters. Consider analyzing a shorter passage for better results.
+              </p>
+            )}
 
             <input
               type="text"
               value={source}
               onChange={e => setSource(e.target.value)}
               placeholder="Source (optional) — e.g. Der Spiegel, podcast, novel…"
-              className="w-full bg-stone-900 border border-stone-700/80 rounded-xl px-4 py-3
-                text-stone-100 placeholder-stone-600 text-sm
-                focus:outline-none focus:border-yellow-500/50 transition-colors"
+              className={inputCls}
             />
 
             <button
               onClick={handleAnalyze}
-              disabled={!text.trim()}
-              className="w-full py-3.5 bg-yellow-400 text-stone-900 rounded-xl text-sm font-semibold
-                hover:bg-yellow-300 active:bg-yellow-500 transition-colors
+              disabled={!text.trim() || overLimit}
+              className="w-full py-3.5 bg-accent-gold text-primary rounded-xl text-sm font-semibold
+                hover:brightness-110 active:brightness-95
                 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Analyze with Claude
             </button>
 
-            <p className="text-center text-xs text-stone-600">
+            <p className="text-center text-xs text-warm-600">
               ⌘ + Enter to submit
             </p>
           </div>
@@ -154,12 +164,12 @@ export default function TextAnalysis() {
     return (
       <div className="flex flex-col items-center justify-center min-h-full gap-8 px-6">
         <div className="relative w-14 h-14">
-          <div className="absolute inset-0 rounded-full border-2 border-stone-800" />
-          <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-yellow-400 animate-spin" />
+          <div className="absolute inset-0 rounded-full border-2 border-warm-800" />
+          <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-accent-gold animate-spin" />
         </div>
         <div className="text-center space-y-1.5">
-          <p className="text-stone-200 font-medium">Analyzing with Claude…</p>
-          <p className="text-stone-500 text-sm">Extracting vocabulary, phrases &amp; grammar notes</p>
+          <p className="text-warm-200 font-medium">Analyzing with Claude…</p>
+          <p className="text-secondary text-sm">Extracting vocabulary, phrases &amp; grammar notes</p>
         </div>
       </div>
     )
@@ -176,25 +186,25 @@ export default function TextAnalysis() {
     <div className="flex flex-col min-h-full">
 
       {/* ── Sticky action bar ─────────────────────────────────────── */}
-      <div className="sticky top-0 z-20 bg-stone-950/95 backdrop-blur-sm border-b border-stone-800/70
+      <div className="sticky top-0 z-20 bg-primary/95 backdrop-blur-sm border-b border-warm-800/70
         px-8 py-4 flex items-center justify-between gap-6 flex-wrap">
         <div>
           {analysis.source && (
-            <div className="text-xs font-semibold text-stone-600 uppercase tracking-widest mb-0.5">
+            <div className="text-xs font-semibold text-warm-600 uppercase tracking-widest mb-0.5">
               {analysis.source}
             </div>
           )}
-          <div className="text-stone-400 text-sm">
-            <span className="text-stone-300">{vocabCount}</span> word{vocabCount !== 1 ? 's' : ''} ·{' '}
-            <span className="text-stone-300">{phraseCount}</span> phrase{phraseCount !== 1 ? 's' : ''} ·{' '}
-            <span className="text-stone-300">{grammarCount}</span> grammar note{grammarCount !== 1 ? 's' : ''}
+          <div className="text-secondary text-sm">
+            <span className="text-warm-300">{vocabCount}</span> word{vocabCount !== 1 ? 's' : ''} ·{' '}
+            <span className="text-warm-300">{phraseCount}</span> phrase{phraseCount !== 1 ? 's' : ''} ·{' '}
+            <span className="text-warm-300">{grammarCount}</span> grammar note{grammarCount !== 1 ? 's' : ''}
           </div>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={handleReset}
-            className="px-4 py-2 text-sm text-stone-500 hover:text-stone-300 transition-colors"
+            className="px-4 py-2 text-sm text-secondary hover:text-warm-300"
           >
             ← New Analysis
           </button>
@@ -202,8 +212,8 @@ export default function TextAnalysis() {
           <button
             onClick={handleAddSelected}
             disabled={addLoading || selectedCount === 0}
-            className="px-4 py-2 bg-stone-800 border border-stone-700 text-stone-200 rounded-lg text-sm
-              hover:bg-stone-700 hover:border-stone-600 transition-colors
+            className="px-4 py-2 bg-tertiary border border-warm-700 text-warm-200 rounded-lg text-sm
+              hover:bg-warm-700 hover:border-warm-600
               disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Add Selected ({selectedCount})
@@ -212,8 +222,8 @@ export default function TextAnalysis() {
           <button
             onClick={() => setShowAnki(true)}
             disabled={addLoading || (vocabCount === 0 && phraseCount === 0)}
-            className="px-4 py-2 bg-stone-800 border border-stone-700 text-stone-300 rounded-lg text-sm font-semibold
-              hover:bg-stone-700 hover:border-stone-600 transition-colors
+            className="px-4 py-2 bg-tertiary border border-warm-700 text-warm-300 rounded-lg text-sm font-semibold
+              hover:bg-warm-700 hover:border-warm-600
               disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -225,8 +235,8 @@ export default function TextAnalysis() {
           <button
             onClick={handleAddAll}
             disabled={addLoading}
-            className="px-5 py-2 bg-yellow-400 text-stone-900 rounded-lg text-sm font-semibold
-              hover:bg-yellow-300 active:bg-yellow-500 transition-colors
+            className="px-5 py-2 bg-accent-gold text-primary rounded-lg text-sm font-semibold
+              hover:brightness-110 active:brightness-95
               disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {addLoading ? 'Adding…' : 'Add All to Databases'}
@@ -236,13 +246,12 @@ export default function TextAnalysis() {
 
       {/* ── Analysis content ──────────────────────────────────────── */}
       <div className="px-8 py-10 max-w-4xl w-full mx-auto">
-        {/* Original text preview */}
         {analysis.originalText && (
-          <div className="mb-12 pb-10 border-b border-stone-800/60">
-            <div className="text-xs font-semibold text-stone-600 uppercase tracking-widest mb-3">
+          <div className="mb-12 pb-10 border-b border-warm-800/60">
+            <div className="text-xs font-semibold text-warm-600 uppercase tracking-widest mb-3">
               Source Text
             </div>
-            <blockquote className="text-stone-400 text-sm leading-relaxed italic border-l-2 border-stone-700 pl-4">
+            <blockquote className="text-secondary text-sm leading-relaxed italic border-l-2 border-warm-700 pl-4">
               {analysis.originalText.length > 400
                 ? analysis.originalText.slice(0, 400) + '…'
                 : analysis.originalText}
@@ -279,24 +288,12 @@ export default function TextAnalysis() {
         />
       </div>
 
-      {/* ── Toast ─────────────────────────────────────────────────── */}
-      {toast && (
-        <div
-          className={`fixed bottom-6 right-6 z-50 px-5 py-3.5 rounded-xl text-sm font-medium
-            shadow-2xl max-w-sm leading-snug
-            ${toast.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'}`}
-        >
-          {toast.msg}
-        </div>
-      )}
-
-      {/* ── Anki export modal ─────────────────────────────────────── */}
       {showAnki && (
         <AnkiExportModal
           vocabRows={analysis.vocabulary || []}
           phraseRows={analysis.phrases || []}
           onClose={() => setShowAnki(false)}
-          onSuccess={() => { setShowAnki(false); showToast('success', 'Anki deck downloaded') }}
+          onSuccess={() => { setShowAnki(false); toast.success('Anki deck downloaded') }}
         />
       )}
     </div>

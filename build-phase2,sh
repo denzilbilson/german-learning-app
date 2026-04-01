@@ -1,0 +1,762 @@
+#!/bin/bash
+set -e
+
+# ============================================
+# German Learning App — Phase 2 Build Script
+# ============================================
+#
+# Runs AFTER build-overnight.sh (Phases 1-6) has already completed.
+# The original Phase 1-6 build did NOT include:
+#   - A defined design system (fonts, color palette, CSS variables)
+#   - Error handling hardening
+#   - Design consistency audit
+# So this script handles all of that FIRST, then adds features.
+#
+# Usage: ./build-phase2.sh
+# Resume: ./build-phase2.sh <phase_number>
+#
+# Phase 7:     Design system + Error handling retrofit
+# Phases 8-10: Features (Sonnet, merged pairs)
+# Phase 11:    Comprehensive test suite (Sonnet)
+# Phases 12-13: Review passes (Sonnet)
+# Phase 14:    Final review + verification (Opus)
+#
+# Estimated cost: $70–100 (cap: $144)
+# ============================================
+
+REPO_DIR="$(pwd)"
+LOG_FILE="build-phase2-log-$(date +%Y%m%d-%H%M%S).txt"
+
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+log()        { echo -e "${GREEN}[$(date +%H:%M:%S)]${NC} $1" | tee -a "$LOG_FILE"; }
+error()      { echo -e "${RED}[$(date +%H:%M:%S)] ERROR:${NC} $1" | tee -a "$LOG_FILE"; }
+warn()       { echo -e "${YELLOW}[$(date +%H:%M:%S)] WARNING:${NC} $1" | tee -a "$LOG_FILE"; }
+review_log() { echo -e "${CYAN}[$(date +%H:%M:%S)] REVIEW:${NC} $1" | tee -a "$LOG_FILE"; }
+
+check_prereqs() {
+    log "Checking prerequisites..."
+    command -v claude &> /dev/null || { error "Claude Code CLI not found."; exit 1; }
+    [ -n "$ANTHROPIC_API_KEY" ]   || { error "ANTHROPIC_API_KEY not set."; exit 1; }
+    [ -f "CLAUDE.md" ]            || { error "CLAUDE.md not found. Are you in the project directory?"; exit 1; }
+    [ -d "client/src" ]           || { error "Phase 1-6 build not found. Run build-overnight.sh first."; exit 1; }
+    log "All prerequisites met."
+}
+
+commit_phase() {
+    local phase_num=$1
+    local phase_name=$2
+    cd "$REPO_DIR"
+    git add -A
+    git commit -m "Phase $phase_num: $phase_name [autonomous build]" || warn "Nothing to commit for Phase $phase_num"
+    git push origin main || error "Push failed for Phase $phase_num. Continuing."
+    log "Phase $phase_num committed and pushed."
+}
+
+run_phase() {
+    local phase_num=$1
+    local phase_name=$2
+    local model=$3
+    local budget=$4
+    local prompt=$5
+
+    log "============================================"
+    log "PHASE $phase_num: $phase_name"
+    log "Model: $model | Budget cap: \$$budget"
+    log "============================================"
+
+    cd "$REPO_DIR"
+
+    claude -p "$prompt" \
+        --dangerously-skip-permissions \
+        --model "$model" \
+        --max-budget-usd "$budget" \
+        2>&1 | tee -a "$LOG_FILE"
+
+    [ ${PIPESTATUS[0]} -ne 0 ] && warn "Phase $phase_num exited non-zero. Committing progress."
+    commit_phase "$phase_num" "$phase_name"
+    log "Phase $phase_num complete."
+    echo "" >> "$LOG_FILE"
+}
+
+
+# ============================================
+# PHASE 7: DESIGN SYSTEM + ERROR HANDLING RETROFIT
+# This is the critical foundation phase — it retrofits
+# everything the original Phases 1-6 were missing.
+# Higher budget because it touches every existing file.
+# ============================================
+
+phase_7() {
+    run_phase 7 "Design System + Error Handling Retrofit" "sonnet" 22 "
+Read CLAUDE.md and examine the FULL codebase — every file in client/src/ and server/. Understand what Phases 1-6 built.
+
+This phase RETROFITS two critical foundations that the original build did not include: a cohesive design system and robust error handling. You must touch nearly every existing file. Do not skip any file.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PART A: ESTABLISH THE DESIGN SYSTEM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The existing code likely uses generic fonts, default Tailwind colors, and inconsistent styling. You will replace all of it with a deliberate, premium design system.
+
+1. FONTS — add to client/index.html:
+   - Import TWO Google Fonts via <link> tags:
+     a. A distinctive display/heading font with editorial personality. Choose ONE: DM Serif Display, Playfair Display, Fraunces, Lora, or Newsreader. NOT Inter, Roboto, Arial, or any system font.
+     b. A clean, highly readable sans-serif body font. Choose ONE: DM Sans, Outfit, Plus Jakarta Sans, or Manrope. NOT Inter or Roboto.
+   - Register both in tailwind.config.js under theme.extend.fontFamily as 'display' and 'sans'
+
+2. COLOR PALETTE — define CSS custom properties in client/src/index.css and register in Tailwind:
+   - --bg-primary: deep warm dark (#0F1117 or similar — NOT pure black, NOT cold gray)
+   - --bg-secondary: slightly lighter (card backgrounds, sidebar — ~#1A1D27)
+   - --bg-tertiary: hover states, active items, input backgrounds (~#252836)
+   - --text-primary: warm off-white (#F0EDE6 — NOT pure #FFFFFF)
+   - --text-secondary: muted (#8B8D97)
+   - --accent-gold: #D4A843 (German flag gold — primary interactive color for links, buttons, focus rings, active states)
+   - --accent-red: #C4453C (errors, feminine nouns, sparingly)
+   - --accent-blue: #4A90D9 (masculine nouns)
+   - --accent-green: #4AD97A (neuter nouns, success states)
+   - --accent-purple: #9B59B6 (plural nouns)
+   - Register these as Tailwind colors so they can be used as bg-primary, text-accent-gold, etc.
+
+3. BASE STYLES — add to client/src/index.css:
+   - body: bg-primary, text-primary, font-sans (the body font)
+   - Smooth scroll: html { scroll-behavior: smooth }
+   - Custom scrollbar: thin, dark track (--bg-tertiary), dark thumb (--bg-secondary), rounded
+   - Text selection: accent-gold background with dark text
+   - All interactive elements: transition-all duration-150 ease
+   - Antialiased text: -webkit-font-smoothing: antialiased
+
+4. NOW APPLY TO EVERY EXISTING COMPONENT AND PAGE — go file by file:
+   - Replace ALL hardcoded colors (bg-gray-800, bg-slate-900, text-white, text-gray-400, etc.) with the new palette (bg-primary, bg-secondary, text-primary, text-secondary, etc.)
+   - Replace ALL heading font usage: page titles and section headings must use font-display (the heading font). Body text, labels, inputs, buttons use font-sans (the body font).
+   - Replace ALL interactive color accents: any blue/indigo/purple focus rings, active states, or highlights → accent-gold. Buttons → accent-gold background or accent-gold outline.
+   - Replace ALL text-white with text-primary (warm off-white)
+   - Ensure every card/panel uses bg-secondary with rounded-xl and consistent padding (p-6)
+   - Ensure every input has: bg-tertiary, rounded-lg, accent-gold focus ring (focus:ring-accent-gold focus:ring-2), text-primary, placeholder in text-secondary
+   - Ensure every button has: rounded-lg, consistent padding (px-4 py-2), hover state (brightness or slight lift), transition
+   - Ensure page titles use font-display text-2xl or text-3xl font-semibold
+   - Ensure consistent section spacing (space-y-6 or gap-6 between major sections on every page)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PART B: ERROR HANDLING RETROFIT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+5. server/services/claude-service.js — add if missing:
+   - API key missing/invalid → throw 'Anthropic API key not configured. Add ANTHROPIC_API_KEY to .env.'
+   - Rate limit (429) → exponential backoff: 2s, 4s, 8s, retry up to 3 times
+   - Network errors (ECONNREFUSED, ETIMEDOUT) → throw 'Could not reach AI service. Check your internet.'
+   - Malformed JSON response → strip markdown backticks, retry up to 2 times
+   - 120-second timeout on all requests
+   - Log every error with timestamp
+
+6. server/services/markdown-store.js — add if missing:
+   - File not found → auto-create with correct headers
+   - Malformed table → skip bad rows, console.warn, return valid rows
+   - Empty file → return empty array
+   - Validate data before write (required fields present, pipe chars escaped in cell content)
+   - Out-of-bounds index → throw descriptive error
+
+7. ALL server/routes/*.js — wrap EVERY route handler in try/catch if not already:
+   - Consistent error response: { error: true, message: string, code: string }
+   - Validate request bodies: 400 for missing/invalid fields, specifying which field
+   - 404 for not-found resources
+   - 503 when Claude API is unavailable
+   - Never expose stack traces
+
+8. server/index.js — add if missing:
+   - Global error handling middleware (bottom of middleware stack)
+   - Request logging middleware (method, path, status code, response time ms)
+   - Uncaught exception handler → log and exit
+   - Unhandled rejection handler → log and exit
+   - On startup: validate data directory exists, create if missing
+
+9. client/src/services/api.js — add if missing:
+   - 30-second timeout via AbortController on every request
+   - Network failure → throw 'Server not reachable — is the backend running?'
+   - Non-JSON response → throw 'Unexpected server response'
+   - 5xx → retry once after 2 seconds, then throw
+   - 4xx → parse error body, throw server's message
+
+10. Build client/src/components/ErrorBoundary.jsx (if not present):
+    - React Error Boundary catching render crashes
+    - Styled card: 'Something went wrong' with error message and 'Try Again' button
+    - Uses the dark theme (bg-secondary, text-primary, accent-gold button)
+    - Wrap every page in App.jsx with this
+
+11. Build client/src/components/Toast.jsx (if not present):
+    - ToastProvider context + useToast() hook
+    - Types: success (green), error (red), info (gold)
+    - Bottom-right position, stack vertically, auto-dismiss 4s
+    - Slide-in animation
+    - Wrap app in ToastProvider
+
+12. Retrofit ALL existing pages:
+    - Every API call must have: loading state (skeleton or spinner), error state (friendly card with retry), empty state (warm message with call-to-action)
+    - Every mutation must show a toast on success ('Added 3 words') and on failure
+    - TextAnalysis: disable button on empty input, character count, warn >5000 chars
+    - Practice: handle empty vocabulary gracefully, handle mid-session API failure
+    - Dashboard: handle missing data (show '--' not crash)
+
+This phase is LARGE but critical. It transforms the codebase from a rough prototype into a polished, resilient application. Touch every file. Leave nothing in default styling or without error handling.
+"
+}
+
+
+# ============================================
+# FEATURE PHASES (merged pairs)
+# ============================================
+
+phase_8() {
+    run_phase 8 "Bulk Import + German-Specific UX" "sonnet" 18 "
+Read CLAUDE.md and examine the full codebase.
+
+This phase combines TWO features. Build both completely. Follow the design system established in Phase 7 — use the defined fonts, colors (bg-primary/secondary/tertiary, text-primary/secondary, accent-gold), and component patterns.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FEATURE A: BULK IMPORT (CSV / Notion Export)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Build server/routes/import.js:
+   - POST /api/import/csv — multipart file upload (CSV or TSV)
+   - Auto-detects delimiter (comma, tab, semicolon)
+   - Auto-maps columns by header name (fuzzy: 'word', 'Word', 'german_word', 'Wort' all → Word)
+   - Returns preview: first 10 rows mapped to target schema, unmapped columns flagged
+   - POST /api/import/confirm — takes mapping + full data, deduplicates against existing entries, appends to markdown
+   - Returns summary: { added: N, duplicatesSkipped: N, errors: N }
+   - Error handling: malformed CSV → parse errors with row numbers, wrong file type → 400, >5MB → 400
+
+2. Build client/src/pages/Import.jsx — step wizard:
+   - Step 1: Drag-and-drop upload zone. Styled: dashed border in bg-tertiary, hover to accent-gold border dashed, centered upload icon + text in text-secondary
+   - Step 2: Column mapping — user's headers on left, dropdown selectors mapping to schema on right. Auto-filled. 5-row preview below styled as a mini DataTable.
+   - Step 3: Target database — two selectable cards (Vocabulary / Phrases), selected card has accent-gold border
+   - Step 4: Confirmation — new vs duplicate counts, green/gold badges
+   - Step 5: Success — accent-gold checkmark, summary stats, 'View Database' link
+   - Progress indicator at top: numbered steps, active in accent-gold, completed with checkmark
+   - Back/Next buttons styled consistently
+
+3. Handle Notion quirks: quoted fields, date normalization (any format → YYYY-MM-DD), multi-select commas.
+
+4. Install multer and csv-parse in server/. Add 'Import' to sidebar with upload icon.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FEATURE B: GERMAN-SPECIFIC UX ENHANCEMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+5. NOUN GENDER COLOR CODING:
+   - Build client/src/components/GenderBadge.jsx
+   - der (masculine) → accent-blue (#4A90D9) pill badge
+   - die (feminine) → accent-red (#D94A6B) pill badge
+   - das (neuter) → accent-green (#4AD97A) pill badge
+   - die (plural) → accent-purple (#9B59B6) pill badge
+   - Parse Part of Speech: detect (m.), (f.), (n.), (pl.), maskulin, feminin, neutral, der, die, das
+   - Apply GenderBadge in: Vocabulary table, Analysis results vocabulary section, Practice questions, Flashcard display
+   - Add legend in sidebar footer: four small colored dots with labels
+
+6. PRONUNCIATION (Web Speech API):
+   - Build client/src/components/SpeakButton.jsx
+   - SpeechSynthesisUtterance with lang='de-DE', rate=0.85
+   - Small speaker SVG icon: text-secondary default, accent-gold on hover, subtle pulse on click
+   - Place next to EVERY German text: Vocabulary table words, Phrases table phrases, Analysis German lines, Practice questions
+
+7. VERB CONJUGATION HELPER:
+   - server/prompts/conjugate-verb.js — prompt for Präsens, Präteritum, Perfekt, Konjunktiv II
+   - POST /api/vocabulary/conjugate — takes { verb }, returns conjugation JSON
+   - Cache in data/conjugations/ (check cache before API call)
+   - Vocabulary table: verbs get 'conjugate' button → expands inline conjugation table styled with bg-tertiary, clean grid
+
+8. ARTICLE DRILL — 6th practice mode:
+   - Shows noun WITHOUT article, user clicks der/die/das (buttons colored with gender colors)
+   - Correct: button flashes its gender color + checkmark
+   - Incorrect: button flashes red, correct answer highlights in its gender color
+   - Add to Practice page mode selector
+
+9. GERMAN KEYBOARD HELPER:
+   - Build client/src/components/GermanKeyboard.jsx
+   - Small bar with: ä ö ü ß Ä Ö Ü
+   - Clicking inserts at cursor in focused input
+   - Toggle show/hide, remember in localStorage
+   - Styled: bg-secondary, small rounded buttons bg-tertiary, hover accent-gold
+   - Appears near every text input in the app
+
+Register all routes in server/index.js.
+"
+}
+
+phase_9() {
+    run_phase 9 "Global Search + Session History" "sonnet" 18 "
+Read CLAUDE.md and examine the full codebase. Follow the established design system.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FEATURE A: GLOBAL SEARCH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Build server/routes/search.js:
+   - GET /api/search?q=<query>&type=all|vocabulary|phrases|grammar|analysis
+   - Searches: vocabulary (word, meanings, examples), phrases (phrase, meaning), grammar (topic, text), analysis files (original text, vocabulary)
+   - Results grouped by type with relevance snippets
+   - Case-insensitive, German char equivalence (ä↔ae, ö↔oe, ü↔ue, ß↔ss)
+   - Sorted: exact match > starts with > contains
+   - Limit 20 per type
+   - Empty query → 400
+
+2. Build client/src/components/GlobalSearch.jsx:
+   - Cmd+K / Ctrl+K opens modal with backdrop blur
+   - Search input: large, auto-focused, accent-gold bottom border, placeholder 'Search vocabulary, phrases, grammar...'
+   - Results grouped by category with icons (📖 Vocabulary, 💬 Phrases, 📝 Grammar, 🔍 Analyses)
+   - Each result: word/title in text-primary, snippet with match highlighted in accent-gold
+   - Debounced 300ms
+   - Keyboard nav: arrow keys, Enter to go, Escape to close
+   - No results: 'No results for X' state
+   - Recent searches in localStorage (shown when input empty)
+
+3. Integration: add to app layout (every page), search icon + 'Cmd+K' hint in sidebar
+   URL param support: /vocabulary?highlight=word scrolls to and highlights that row
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FEATURE B: SESSION HISTORY BROWSER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+4. Update progress logging:
+   - POST /api/progress stores full session detail:
+     { id, datetime, mode, questions: [{ question, userAnswer, correctAnswer, correct, explanation, timeMs }], score, totalQuestions, weakWords }
+   - Store in data/progress/sessions/ as JSON per session (YYYY-MM-DD-HHMMSS.json)
+   - Keep summary in data/progress/log.md for dashboard
+
+5. Build server/routes/sessions.js:
+   - GET /api/sessions — list all, newest first, paginated (?page=&limit=20)
+   - GET /api/sessions/:id — full detail
+   - GET /api/sessions/weak-words — aggregate incorrect answers: word, timesSeen, timesWrong, errorRate, lastMissedDate, sorted by frequency
+   - DELETE /api/sessions/:id
+
+6. Build client/src/pages/SessionHistory.jsx:
+   Session list:
+   - Filter bar: mode dropdown + date range (This week / This month / All time)
+   - Cards per session: Date (relative), Mode badge with icon, Score (% color-coded: green >80%, accent-gold >60%, accent-red <60%), Question count, Duration
+   - Click to expand detail
+
+   Session detail:
+   - Header: mode badge, date, score large
+   - Question list: question text, user answer (green if correct, red if wrong), correct answer shown when wrong, collapsible explanation
+   - Footer: 'Words to review' linking to vocab entries
+
+7. Build client/src/pages/WeakWords.jsx (or tab in SessionHistory):
+   - Table: Word, GenderBadge, Times Seen, Times Wrong, Error Rate (% color-coded), Last Missed
+   - Sortable columns
+   - 'Practice Weak Words' button → /practice pre-filtered
+   - 'Export to Anki' button
+
+8. Sidebar: add 'History' with clock icon. Update Practice page to track time per question and save full session detail.
+
+Register all routes in server/index.js.
+"
+}
+
+phase_10() {
+    run_phase 10 "Developer Documentation" "sonnet" 12 "
+Read EVERY file in the project. Base documentation on the ACTUAL code, not on plans.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DEVELOPER DOCUMENTATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Create/update README.md:
+   - Project title + one-paragraph description
+   - Tech stack: React, Vite, Tailwind, Express, Claude API, Markdown storage
+   - Quick start:
+     a. Prerequisites: Node 18+, npm, Anthropic API key
+     b. Clone repo
+     c. npm install in root, client/, server/
+     d. cp .env.example .env → add API key
+     e. npm run dev
+     f. Open http://localhost:5173
+   - Actual project structure tree (run ls -R and use real paths)
+   - Feature list with brief descriptions
+   - API reference: table of ALL routes (method, path, description) — read server/index.js and every route file
+   - Environment variables reference
+   - How the markdown data layer works (brief)
+   - Troubleshooting: common issues and fixes
+   - MIT license
+
+2. Create docs/ directory:
+   - docs/ARCHITECTURE.md: ASCII system diagram (browser ↔ Express ↔ files ↔ Claude API), data flow for each workflow (analysis, practice, import, export, search), error handling approach, design system overview (fonts, colors, patterns)
+   - docs/PROMPTS.md: document every prompt template in server/prompts/ — purpose, input shape, output shape, one example pair
+   - docs/CONTRIBUTING.md: dev setup, code style (ES modules, Tailwind utilities, component patterns), how to add a new page, a new route, a new practice mode, testing instructions
+
+3. Add JSDoc comments to: markdown-store.js, claude-service.js, anki-export.js (document every public method with @param and @returns)
+
+4. Add brief header comments to every route file (what endpoints it provides).
+
+5. Add component doc comments to: DataTable, AnalysisReader, PracticeCard, GlobalSearch, GenderBadge, SpeakButton, GermanKeyboard, ErrorBoundary, Toast.
+"
+}
+
+
+# ============================================
+# TEST SUITE
+# ============================================
+
+phase_11() {
+    run_phase 11 "Comprehensive Test Suite" "sonnet" 22 "
+Read CLAUDE.md and examine EVERY file in client/src/ and server/.
+
+Build a COMPREHENSIVE test suite. At least 150 test cases. Every test must assert real behavior — no placeholder 'renders without crashing' tests.
+
+SETUP:
+- Server: npm install --save-dev vitest supertest @vitest/coverage-v8
+- Client: npm install --save-dev vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom @vitest/coverage-v8
+- Configure vitest in both (vitest.config.js). Add scripts: 'test', 'test:watch', 'test:coverage'. Add root 'npm test' running both.
+
+BACKEND TESTS (server/__tests__/):
+
+1. markdown-store.test.js (15+ tests):
+   - Parse vocabulary table → correct JSON with all 8 fields
+   - Parse phrases table → correct JSON with all 5 fields
+   - Empty table (headers only) → empty array
+   - Missing file → creates with correct headers, returns empty array
+   - Malformed table (missing columns, extra pipes) → recovers, skips bad rows
+   - Special chars: pipes, umlauts (ä ö ü ß), <br> tags, HTML, backticks all survive
+   - Round-trip: read → write → read = identical data
+   - Add entry → appears at end of file
+   - Update by index → change persists, other rows untouched
+   - Delete by index → removed, other rows shift correctly
+   - Out-of-bounds index → throws descriptive error
+   - <br> separators in case examples survive round-trip
+   - Very long cell content (500+ chars) handled
+   - Empty string fields stored and retrieved correctly
+   - Pipe character in cell content escaped correctly
+
+2. claude-service.test.js (mock SDK, 8+ tests):
+   - Successful call → parsed JSON returned
+   - Malformed JSON with markdown backticks → strips and parses
+   - Malformed JSON → retries correct number of times
+   - Max retries exceeded → returns structured error
+   - Missing API key → clear error message
+   - 429 rate limit → retries with backoff
+   - Network error → user-friendly message
+   - Timeout → 'timed out' error
+
+3. anki-export.test.js (8+ tests):
+   - Vocabulary entries → correct TSV with tab separation
+   - Phrase entries → correct TSV
+   - HTML <br> preserved in output
+   - German umlauts survive encoding
+   - Empty input → empty TSV (just headers or empty string)
+   - Special chars (tabs, newlines in data) escaped
+   - Tag format: B1::vocabulary, B2::phrases
+   - Mixed vocabulary + phrases → combined TSV
+
+4. vocabulary.test.js (supertest, 12+ tests):
+   - GET /api/vocabulary → returns array
+   - GET ?search=word → filters correctly
+   - GET ?level=B1 → filters by level
+   - GET ?since=2026-01-01 → filters by date
+   - POST valid body → 201, entry added
+   - POST missing required fields → 400 naming the field
+   - POST empty body → 400
+   - PUT /api/vocabulary/0 valid → updates
+   - PUT out of bounds → 404
+   - DELETE valid → removes
+   - DELETE out of bounds → 404
+   - Verify changes persist to markdown file after POST/PUT/DELETE
+
+5. phrases.test.js — mirror vocabulary tests (10+ tests)
+
+6. analyze.test.js (mock Claude, 8+ tests):
+   - POST /api/analyze with text → structured analysis JSON
+   - POST empty text → 400
+   - Claude unavailable → 503
+   - POST /api/analyze/add → adds to both databases
+   - POST /api/analyze/add with duplicates → skips, returns counts
+   - GET /api/analysis → list of files
+   - GET /api/analysis/nonexistent → 404
+   - Very long text → handled (or appropriate error)
+
+7. anki route tests (5+ tests):
+   - POST export vocabulary → TSV response
+   - POST export phrases → TSV
+   - POST empty selection → 400
+   - Content-Disposition header set
+   - Content-Type is text/tab-separated-values
+
+8. practice.test.js (mock Claude, 6+ tests):
+   - POST /api/practice/generate valid mode → question set
+   - Empty vocabulary → 400 with helpful message
+   - Invalid mode → 400
+   - POST /api/practice/check correct answer → positive feedback
+   - Check wrong answer → correction + explanation
+   - Missing fields → 400
+
+9. search.test.js (6+ tests):
+   - Returns grouped results
+   - type= filter works
+   - Empty query → 400
+   - ä matches ae (German equivalence)
+   - Case insensitive
+   - Results include snippets
+
+10. import.test.js (6+ tests):
+    - Valid CSV → preview with mapped columns
+    - TSV auto-detected
+    - Malformed → parse errors with row numbers
+    - Confirm → entries added to markdown
+    - Duplicates skipped
+    - Notion date formats normalized
+
+11. sessions.test.js (5+ tests):
+    - GET list → paginated
+    - GET /:id → full session detail
+    - GET /weak-words → aggregated data
+    - DELETE → removes file
+    - Nonexistent session → 404
+
+FRONTEND TESTS (client/src/__tests__/):
+
+12. DataTable.test.jsx (10+ tests):
+    - Renders with data (correct row count)
+    - Search filters rows by text match
+    - Column header click sorts
+    - Level pill filters
+    - Click cell → edit mode (input appears)
+    - Enter saves edit
+    - Escape cancels edit
+    - Delete shows confirmation
+    - Confirm delete removes row
+    - Empty data → empty state message
+    - Loading prop → skeleton/spinner
+
+13. GenderBadge.test.jsx (5 tests):
+    - Blue for masculine
+    - Red for feminine
+    - Green for neuter
+    - Purple for plural
+    - Graceful on unexpected input
+
+14. GlobalSearch.test.jsx (6+ tests):
+    - Opens on Ctrl+K keydown
+    - Typing shows results (after debounce)
+    - Results grouped by category
+    - Match text highlighted
+    - Click triggers navigation
+    - Escape closes
+
+15. GermanKeyboard.test.jsx (3 tests):
+    - Renders all 7 chars (ä ö ü ß Ä Ö Ü)
+    - Click inserts into input
+    - Toggles visibility
+
+16. TextAnalysis.test.jsx (6+ tests):
+    - Renders textarea
+    - Button disabled when empty
+    - Loading state during API call
+    - Results render on success
+    - Error card on failure
+    - Add to database triggers correct API call
+
+17. Practice.test.jsx (6+ tests):
+    - All 6 mode cards render
+    - Selecting mode triggers question generation
+    - Answer submission shows feedback
+    - Progress bar updates
+    - Session summary renders at end
+    - Score calculated correctly
+
+18. Import.test.jsx (5+ tests):
+    - Upload zone accepts .csv
+    - Rejects wrong file types
+    - Column mapping renders with dropdowns
+    - Confirmation shows counts
+    - Success displays summary
+
+After writing ALL tests, RUN them:
+  cd server && npx vitest run
+  cd client && npx vitest run
+
+Fix EVERY failure. All tests must pass. If a test exposes an app bug, fix the app. If a test is wrong, fix it and comment why.
+"
+}
+
+
+# ============================================
+# REVIEW PASSES
+# ============================================
+
+phase_12() {
+    run_phase 12 "Review Pass 1: Correctness & Data Flow" "sonnet" 15 "
+Rigorous code review. Read EVERY file in client/src/ and server/. Every single one.
+
+REVIEW PASS 1 of 3. Focus: CORRECTNESS.
+
+1. IMPORTS — verify every import resolves to a real file. Every node_modules import is in the correct package.json. No require() anywhere — ES modules only. No circular dependencies.
+
+2. API CONTRACTS — for every call in api.js, the backend route exists, is registered in server/index.js, and matches method + path + body shape + response shape. For every backend route, the frontend calls it somewhere.
+
+3. DATA FLOW — trace end to end, fix broken links:
+   a. Analysis: input → POST /api/analyze → claude-service → prompt → parse → render in AnalysisReader → Add → POST /api/analyze/add → markdown-store → toast → database page refreshes
+   b. Anki: select → POST /api/anki/export → anki-export.js → TSV → Content-Disposition → browser download
+   c. Practice: mode → POST /api/practice/generate → questions → PracticeCard → answer → POST /api/practice/check → feedback → session end → POST /api/progress → summary
+   d. Import: file → POST /api/import/csv → parse + preview → mapping → POST /api/import/confirm → markdown-store → toast → database shows new entries
+   e. Search: query → GET /api/search → results → click → navigate with ?highlight= → page scrolls
+
+4. REACT STATE — every page: data refreshes after mutations, loading set true before and false after (both success AND error paths), error states cleared on retry.
+
+5. MARKDOWN ROUND-TRIP — <br> tags, umlauts, escaped pipes, empty fields all survive read→write→read.
+
+6. RUN TESTS: cd server && npx vitest run && cd ../client && npx vitest run
+   Fix EVERY failure. Run again after fixes.
+"
+}
+
+phase_13() {
+    run_phase 13 "Review Pass 2: Security, Performance & Edge Cases" "sonnet" 15 "
+REVIEW PASS 2 of 3. Read EVERY file from scratch.
+
+1. SECURITY:
+   - Search ALL files under client/ for: 'ANTHROPIC', 'api_key', 'sk-ant'. Must find ZERO matches. API key only in server/.env.
+   - .gitignore has .env and node_modules
+   - .env.example has placeholders only
+   - No hardcoded secrets anywhere
+   - User input sanitized before: markdown write (escape |), Claude prompts (delimited clearly), frontend render (check dangerouslySetInnerHTML for XSS)
+   - File uploads: multer size limit + type check, no path traversal (../)
+   - CSV: cells starting with = + - @ are escaped (formula injection)
+   - CORS: localhost only
+
+2. PERFORMANCE:
+   - No API calls in render bodies (must be in useEffect/handlers)
+   - Search/filter inputs debounced
+   - Conjugation results cached (check data/conjugations/ before API)
+   - No N+1 file reads
+
+3. EDGE CASES — verify no crash:
+   - Zero entries: every page loads
+   - One entry: sort/filter/search work
+   - Pipe | in a cell field
+   - 50-char compound word: tables don't overflow
+   - Two rapid clicks on Add/Delete: no duplicate
+   - Browser back button works
+   - Direct URL paste loads correct page
+   - /vocabulary?highlight=NonexistentWord: no crash
+   - Empty CSV upload
+   - Practice with 1 word in vocabulary
+
+4. Remove unused npm dependencies.
+
+5. RUN TESTS. Fix failures. ADD new tests for uncovered edge cases.
+"
+}
+
+phase_14() {
+    run_phase 14 "Final Review: Polish & Verification (Opus)" "opus" 20 "
+You are Claude Opus performing the FINAL quality review. Read EVERY file one last time. This is the last pass before the project ships.
+
+1. DESIGN CONSISTENCY — verify across ALL pages and components:
+   - Same dark background (bg-primary/bg-secondary) everywhere — no page uses a different shade
+   - Heading font (font-display) used for ALL page titles and section headings — no page uses the body font for headings
+   - Body font (font-sans) for ALL content, labels, inputs, buttons — consistent everywhere
+   - Text is warm off-white (text-primary), NOT pure white (#fff / text-white) anywhere
+   - accent-gold for ALL interactive highlights — not Tailwind blue/indigo defaults anywhere
+   - Cards: same rounded-xl, same bg-secondary, same padding everywhere (StatCard, analysis cards, practice cards, session cards, import cards)
+   - Buttons: same border-radius, padding, font, hover effect everywhere
+   - Inputs: same bg-tertiary, same rounded-lg, same focus ring (accent-gold) everywhere
+   - Loading states: same pattern (skeleton or spinner — one pattern, applied to all pages)
+   - Error states: same card pattern everywhere
+   - Empty states: same visual pattern everywhere
+   - Sidebar active state highlights correctly on EVERY page
+   - Toast position consistent (bottom-right)
+
+2. TYPOGRAPHY:
+   - H1 for page title (one per page), H2 for sections — consistent hierarchy
+   - No text smaller than 14px for body
+   - Line height 1.5+ for body text
+   - ä ö ü ß render correctly in EVERY context: tables, search, analysis, practice, flashcards, export, import
+   - Long compounds (Geschwindigkeitsbegrenzung) don't overflow
+
+3. GERMAN UX — verify thorough integration:
+   - GenderBadge on EVERY noun: vocabulary table, analysis vocab section, practice questions, weak words table
+   - SpeakButton on EVERY German text: vocab table, phrases table, analysis German lines, practice questions
+   - GermanKeyboard on EVERY text input: analysis textarea, practice answer, search, add-entry modal, inline edit cells, import mapping
+   - Article Drill accessible from practice page
+
+4. NAVIGATION: every sidebar link correct, active highlighted, URLs update, direct URL access works, back/forward works, /vocabulary?highlight=word works, Cmd+K search works on all pages.
+
+5. RESPONSIVE: sidebar collapses <768px, tables scroll horizontally, practice usable on mobile, modals fit viewport.
+
+6. DOCS: README matches reality, all listed routes exist, structure tree accurate, .env.example complete.
+
+7. FINAL TEST RUN:
+   cd server && npx vitest run --reporter=verbose
+   cd client && npx vitest run --reporter=verbose
+   Every test must pass. Fix any failure.
+
+   Report: total test files, total test cases, all passing yes/no.
+
+8. CHECKLIST — verify and fix:
+   [ ] All imports resolve
+   [ ] All routes registered in server/index.js
+   [ ] All pages in sidebar
+   [ ] Global search Cmd+K works everywhere
+   [ ] Gender badges on all nouns
+   [ ] SpeakButton on all German text
+   [ ] German keyboard on all inputs
+   [ ] Error handling on every API call
+   [ ] Loading state on every async op
+   [ ] Empty state on every data page
+   [ ] Dark theme consistent — no white, no default blue
+   [ ] Heading font for headings, body font for body — no exceptions
+   [ ] accent-gold for all interactive elements — no exceptions
+   [ ] All tests pass
+   [ ] Docs match code
+   [ ] .env in .gitignore
+   [ ] No API keys in code
+   [ ] No stray console.log (console.error for real errors OK)
+
+Fix everything. Run tests final time. Done.
+"
+}
+
+
+# ============================================
+# MAIN
+# ============================================
+
+check_prereqs
+START_PHASE=${1:-7}
+
+log "============================================"
+log "PHASE 2 BUILD"
+log "Starting from Phase: $START_PHASE"
+log "Phase 7: Design + Error Handling (Sonnet)"
+log "Phases 8-10: Features + Docs (Sonnet)"
+log "Phase 11: Tests (Sonnet)"
+log "Phases 12-13: Review (Sonnet)"
+log "Phase 14: Final Review (Opus)"
+log "Estimated cost: \$70–100"
+log "Log file: $LOG_FILE"
+log "============================================"
+echo ""
+
+if [ "$START_PHASE" -le 7 ];  then phase_7;  fi
+if [ "$START_PHASE" -le 8 ];  then phase_8;  fi
+if [ "$START_PHASE" -le 9 ];  then phase_9;  fi
+if [ "$START_PHASE" -le 10 ]; then phase_10; fi
+if [ "$START_PHASE" -le 11 ]; then phase_11; fi
+if [ "$START_PHASE" -le 12 ]; then phase_12; fi
+if [ "$START_PHASE" -le 13 ]; then phase_13; fi
+if [ "$START_PHASE" -le 14 ]; then phase_14; fi
+
+log "============================================"
+log "PHASE 2 BUILD COMPLETE"
+log ""
+log "  Phase 7:      Design system + Error handling"
+log "  Phases 8-10:  Features + Documentation"
+log "  Phase 11:     Test suite (150+ cases)"
+log "  Phases 12-13: Sonnet review passes"
+log "  Phase 14:     Opus final review"
+log ""
+log "  cd german-learning-app"
+log "  npm run dev"
+log "  open http://localhost:5173"
+log "============================================"

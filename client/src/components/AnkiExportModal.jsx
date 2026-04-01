@@ -14,25 +14,17 @@ function triggerDownload(blob, filename) {
   URL.revokeObjectURL(url)
 }
 
-/**
- * Props:
- *   vocabRows   – array of vocabulary entries (Title Case or camelCase)
- *   phraseRows  – array of phrase entries (Title Case or camelCase)
- *   onClose     – function()
- */
 export default function AnkiExportModal({ vocabRows = [], phraseRows = [], onClose, onSuccess }) {
   const hasVocab   = vocabRows.length > 0
   const hasPhrases = phraseRows.length > 0
 
-  // What to include
   const [includeVocab,   setIncludeVocab]   = useState(hasVocab)
   const [includePhrases, setIncludePhrases] = useState(hasPhrases)
 
-  // Determine which levels are present in the data
   const availableLevels = useMemo(() => {
     const levels = new Set()
-    for (const e of vocabRows)   { const l = e.Level  || e.level;  if (l) levels.add(l) }
-    for (const e of phraseRows)  { const l = e.Level  || e.level;  if (l) levels.add(l) }
+    for (const e of vocabRows)  { const l = e.Level || e.level; if (l) levels.add(l) }
+    for (const e of phraseRows) { const l = e.Level || e.level; if (l) levels.add(l) }
     return ALL_LEVELS.filter(l => levels.has(l))
   }, [vocabRows, phraseRows])
 
@@ -41,7 +33,6 @@ export default function AnkiExportModal({ vocabRows = [], phraseRows = [], onClo
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
 
-  // Close on Escape
   useEffect(() => {
     const fn = (e) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', fn)
@@ -61,29 +52,19 @@ export default function AnkiExportModal({ vocabRows = [], phraseRows = [], onClo
   }
 
   function toggleAllLevels() {
-    if (allLevelsSelected()) {
-      setSelectedLevels(new Set())
-    } else {
-      setSelectedLevels(new Set(availableLevels))
-    }
+    if (allLevelsSelected()) setSelectedLevels(new Set())
+    else setSelectedLevels(new Set(availableLevels))
   }
 
-  // Filtered entries
   const filteredVocab = useMemo(() =>
     includeVocab
-      ? vocabRows.filter(e => {
-          const l = e.Level || e.level
-          return !l || selectedLevels.has(l)
-        })
+      ? vocabRows.filter(e => { const l = e.Level || e.level; return !l || selectedLevels.has(l) })
       : [],
   [vocabRows, includeVocab, selectedLevels])
 
   const filteredPhrases = useMemo(() =>
     includePhrases
-      ? phraseRows.filter(e => {
-          const l = e.Level || e.level
-          return !l || selectedLevels.has(l)
-        })
+      ? phraseRows.filter(e => { const l = e.Level || e.level; return !l || selectedLevels.has(l) })
       : [],
   [phraseRows, includePhrases, selectedLevels])
 
@@ -94,11 +75,7 @@ export default function AnkiExportModal({ vocabRows = [], phraseRows = [], onClo
     setLoading(true)
     setError(null)
     try {
-      const blob = await api.exportAnki({
-        vocabulary: filteredVocab,
-        phrases:    filteredPhrases,
-        enrich,
-      })
+      const blob = await api.exportAnki({ vocabulary: filteredVocab, phrases: filteredPhrases, enrich })
       const filename = `anki-export-${new Date().toISOString().slice(0, 10)}.tsv`
       triggerDownload(blob, filename)
       onSuccess ? onSuccess() : onClose()
@@ -108,79 +85,59 @@ export default function AnkiExportModal({ vocabRows = [], phraseRows = [], onClo
     }
   }
 
-  const inputCls  = 'w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-stone-100 text-sm focus:outline-none focus:border-yellow-500/60 transition-colors'
   const toggleCls = (active) =>
-    `px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer select-none ${
+    `px-3 py-1.5 rounded-lg text-xs font-semibold border cursor-pointer select-none ${
       active
-        ? 'bg-yellow-400/15 text-yellow-300 border-yellow-500/30'
-        : 'bg-stone-800 text-stone-500 border-stone-700 hover:text-stone-300'
+        ? 'bg-accent-gold/15 text-accent-gold border-accent-gold/30'
+        : 'bg-tertiary text-secondary border-warm-700 hover:text-primary'
     }`
+
+  const inputCls = 'bg-tertiary border border-warm-700 rounded-lg px-3 py-2 text-primary text-sm focus:outline-none focus:ring-2 focus:ring-accent-gold/40 focus:border-accent-gold/60'
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/80 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-primary/80 backdrop-blur-sm"
       onClick={e => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-stone-900 border border-stone-700 rounded-2xl w-full max-w-md mx-4 shadow-2xl">
+      <div className="bg-secondary border border-warm-700 rounded-2xl w-full max-w-md mx-4 shadow-2xl">
 
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-stone-800">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-warm-800">
           <div>
-            <h2 className="font-display text-lg text-stone-100">Export to Anki</h2>
-            <p className="text-stone-500 text-xs mt-0.5">Downloads a .tsv file ready for Anki import</p>
+            <h2 className="font-display text-lg text-primary">Export to Anki</h2>
+            <p className="text-secondary text-xs mt-0.5">Downloads a .tsv file ready for Anki import</p>
           </div>
-          <button
-            onClick={onClose}
-            className="text-stone-600 hover:text-stone-300 transition-colors text-lg leading-none"
-          >✕</button>
+          <button onClick={onClose} className="text-warm-600 hover:text-warm-300 text-lg leading-none">✕</button>
         </div>
 
         <div className="px-6 py-5 space-y-5">
 
-          {/* What to export */}
           {hasVocab && hasPhrases && (
             <div>
-              <label className="block text-xs text-stone-500 uppercase tracking-wider mb-2.5 font-medium">
+              <label className="block text-xs text-secondary uppercase tracking-wider mb-2.5 font-medium">
                 Include
               </label>
               <div className="flex gap-2">
-                <button
-                  onClick={() => setIncludeVocab(v => !v)}
-                  className={toggleCls(includeVocab)}
-                >
+                <button onClick={() => setIncludeVocab(v => !v)} className={toggleCls(includeVocab)}>
                   Vocabulary ({vocabRows.length})
                 </button>
-                <button
-                  onClick={() => setIncludePhrases(v => !v)}
-                  className={toggleCls(includePhrases)}
-                >
+                <button onClick={() => setIncludePhrases(v => !v)} className={toggleCls(includePhrases)}>
                   Phrases ({phraseRows.length})
                 </button>
               </div>
             </div>
           )}
 
-          {/* Level filter */}
           {availableLevels.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-2.5">
-                <label className="text-xs text-stone-500 uppercase tracking-wider font-medium">
-                  Levels
-                </label>
-                <button
-                  onClick={toggleAllLevels}
-                  className="text-xs text-stone-600 hover:text-stone-400 transition-colors"
-                >
+                <label className="text-xs text-secondary uppercase tracking-wider font-medium">Levels</label>
+                <button onClick={toggleAllLevels} className="text-xs text-warm-600 hover:text-secondary">
                   {allLevelsSelected() ? 'Deselect all' : 'Select all'}
                 </button>
               </div>
               <div className="flex gap-2 flex-wrap">
                 {availableLevels.map(level => (
-                  <button
-                    key={level}
-                    onClick={() => toggleLevel(level)}
-                    className={toggleCls(selectedLevels.has(level))}
-                  >
+                  <button key={level} onClick={() => toggleLevel(level)} className={toggleCls(selectedLevels.has(level))}>
                     {level}
                   </button>
                 ))}
@@ -188,66 +145,55 @@ export default function AnkiExportModal({ vocabRows = [], phraseRows = [], onClo
             </div>
           )}
 
-          {/* Enrich with German definitions */}
           <div>
-            <label className="block text-xs text-stone-500 uppercase tracking-wider mb-2.5 font-medium">
+            <label className="block text-xs text-secondary uppercase tracking-wider mb-2.5 font-medium">
               AI Enrichment
             </label>
             <button
               onClick={() => setEnrich(v => !v)}
-              className={`flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl border transition-colors ${
+              className={`flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl border ${
                 enrich
-                  ? 'bg-yellow-400/10 border-yellow-500/30 text-stone-200'
-                  : 'bg-stone-800/60 border-stone-700 text-stone-400 hover:border-stone-600'
+                  ? 'bg-accent-gold/10 border-accent-gold/30 text-primary'
+                  : 'bg-tertiary/60 border-warm-700 text-secondary hover:border-warm-600'
               }`}
             >
-              <div className={`w-8 h-4 rounded-full relative flex-shrink-0 transition-colors ${
-                enrich ? 'bg-yellow-400' : 'bg-stone-700'
-              }`}>
-                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${
-                  enrich ? 'left-4' : 'left-0.5'
-                }`} />
+              <div className={`w-8 h-4 rounded-full relative flex-shrink-0 ${enrich ? 'bg-accent-gold' : 'bg-warm-700'}`}>
+                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white ${enrich ? 'left-4' : 'left-0.5'}`} />
               </div>
               <div>
                 <div className="text-sm font-medium leading-tight">Add German definitions</div>
-                <div className="text-xs text-stone-500 mt-0.5">
+                <div className="text-xs text-secondary mt-0.5">
                   Claude generates a B1–B2 German explanation for each card
                 </div>
               </div>
             </button>
           </div>
 
-          {/* Card count preview */}
-          <div className="flex items-center justify-between px-4 py-3 bg-stone-800/40 rounded-xl border border-stone-700/50">
-            <span className="text-sm text-stone-400">Cards to export</span>
-            <span className={`text-sm font-semibold ${totalCards > 0 ? 'text-stone-100' : 'text-stone-600'}`}>
+          <div className="flex items-center justify-between px-4 py-3 bg-tertiary/40 rounded-xl border border-warm-700/50">
+            <span className="text-sm text-secondary">Cards to export</span>
+            <span className={`text-sm font-semibold ${totalCards > 0 ? 'text-primary' : 'text-warm-600'}`}>
               {totalCards}
             </span>
           </div>
 
           {error && (
-            <p className="text-red-400 text-sm bg-red-950/40 border border-red-800/40 rounded-lg px-3 py-2">
+            <p className="text-accent-red text-sm bg-accent-red/10 border border-accent-red/20 rounded-lg px-3 py-2">
               {error}
             </p>
           )}
 
-          {/* Actions */}
           <div className="flex justify-end gap-3 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-lg text-sm font-semibold text-stone-400 hover:text-stone-200 transition-colors"
-            >
+            <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-semibold text-secondary hover:text-primary">
               Cancel
             </button>
             <button
               onClick={handleExport}
               disabled={loading || totalCards === 0}
-              className="px-5 py-2 rounded-lg text-sm font-semibold bg-yellow-400 text-stone-900 hover:bg-yellow-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              className="px-5 py-2 rounded-lg text-sm font-semibold bg-accent-gold text-primary hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {loading ? (
                 <>
-                  <span className="w-3.5 h-3.5 border-2 border-stone-900/40 border-t-stone-900 rounded-full animate-spin" />
+                  <span className="w-3.5 h-3.5 border-2 border-primary/40 border-t-primary rounded-full animate-spin" />
                   {enrich ? 'Enriching…' : 'Exporting…'}
                 </>
               ) : (

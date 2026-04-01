@@ -2,40 +2,41 @@ import { useState, useEffect } from 'react'
 import DataTable from '../components/DataTable.jsx'
 import AnkiExportModal from '../components/AnkiExportModal.jsx'
 import { api } from '../services/api.js'
+import { useToast } from '../components/Toast.jsx'
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 
 const POS_COLORS = {
-  noun:        'bg-blue-500/15 text-blue-300 border border-blue-500/20',
-  verb:        'bg-emerald-500/15 text-emerald-300 border border-emerald-500/20',
-  adjective:   'bg-orange-500/15 text-orange-300 border border-orange-500/20',
-  adverb:      'bg-purple-500/15 text-purple-300 border border-purple-500/20',
-  conjunction: 'bg-pink-500/15 text-pink-300 border border-pink-500/20',
-  preposition: 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/20',
-  article:     'bg-amber-500/15 text-amber-300 border border-amber-500/20',
-  pronoun:     'bg-violet-500/15 text-violet-300 border border-violet-500/20',
+  noun:        'bg-accent-blue/10 text-accent-blue border border-accent-blue/20',
+  verb:        'bg-accent-green/10 text-accent-green border border-accent-green/20',
+  adjective:   'bg-orange-400/10 text-orange-300 border border-orange-400/20',
+  adverb:      'bg-accent-purple/10 text-accent-purple border border-accent-purple/20',
+  conjunction: 'bg-pink-400/10 text-pink-300 border border-pink-400/20',
+  preposition: 'bg-cyan-400/10 text-cyan-300 border border-cyan-400/20',
+  article:     'bg-accent-gold/10 text-accent-gold border border-accent-gold/20',
+  pronoun:     'bg-accent-purple/10 text-accent-purple border border-accent-purple/20',
 }
 
 function PosBadge({ val }) {
   if (!val) return null
   const key = val.toLowerCase().match(/^[a-z]+/)?.[0] || ''
-  const cls = POS_COLORS[key] || 'bg-stone-700/60 text-stone-400 border border-stone-700'
+  const cls = POS_COLORS[key] || 'bg-tertiary text-secondary border border-warm-700'
   return <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${cls}`}>{val}</span>
 }
 
 function LevelBadge({ val }) {
   if (!val) return null
-  return <span className="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-yellow-400/10 text-yellow-300">{val}</span>
+  return <span className="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-accent-gold/10 text-accent-gold">{val}</span>
 }
 
 const COLUMNS = [
-  { key: 'Word',             label: 'Word',           sortable: true,  editable: true,  textClass: 'font-semibold text-stone-100' },
-  { key: 'Literal Meaning',  label: 'Literal',        sortable: false, editable: true,  textClass: 'text-stone-500 italic text-xs' },
-  { key: 'Intended Meaning', label: 'Meaning',        sortable: false, editable: true,  textClass: 'text-stone-300' },
-  { key: 'Part of Speech',   label: 'POS',            sortable: true,  editable: true,  render: (val) => <PosBadge val={val} /> },
-  { key: 'Level',            label: 'Level',          sortable: true,  editable: true,  options: LEVELS, render: (val) => <LevelBadge val={val} /> },
-  { key: 'Source',           label: 'Source',         sortable: false, editable: true,  textClass: 'text-stone-500 text-xs' },
-  { key: 'Date Added',       label: 'Added',          sortable: true,  editable: false, textClass: 'text-stone-700 text-xs' },
+  { key: 'Word',             label: 'Word',    sortable: true,  editable: true,  textClass: 'font-semibold text-primary' },
+  { key: 'Literal Meaning',  label: 'Literal', sortable: false, editable: true,  textClass: 'text-secondary italic text-xs' },
+  { key: 'Intended Meaning', label: 'Meaning', sortable: false, editable: true,  textClass: 'text-warm-300' },
+  { key: 'Part of Speech',   label: 'POS',     sortable: true,  editable: true,  render: (val) => <PosBadge val={val} /> },
+  { key: 'Level',            label: 'Level',   sortable: true,  editable: true,  options: LEVELS, render: (val) => <LevelBadge val={val} /> },
+  { key: 'Source',           label: 'Source',  sortable: false, editable: true,  textClass: 'text-secondary text-xs' },
+  { key: 'Date Added',       label: 'Added',   sortable: true,  editable: false, textClass: 'text-warm-700 text-xs' },
 ]
 
 const EMPTY_FORM = { Word: '', 'Literal Meaning': '', 'Intended Meaning': '', 'Part of Speech': '', 'Case Examples': '', Level: 'B1', Source: '' }
@@ -66,32 +67,29 @@ function AddModal({ onClose, onSave }) {
     }
   }
 
-  const inputCls = 'w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-stone-100 placeholder-stone-600 text-sm focus:outline-none focus:border-yellow-500/60 transition-colors'
-  const label = (text, required) => (
-    <label className="block text-xs text-stone-500 uppercase tracking-wider mb-1.5 font-medium">
-      {text} {required && <span className="text-yellow-400">*</span>}
-    </label>
-  )
+  const inputCls = 'w-full bg-tertiary border border-warm-700 rounded-lg px-3 py-2 text-primary placeholder-warm-600 text-sm focus:outline-none focus:ring-2 focus:ring-accent-gold/40 focus:border-accent-gold/60'
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/80 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-primary/80 backdrop-blur-sm"
       onClick={e => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-stone-900 border border-stone-700 rounded-2xl w-full max-w-lg mx-4 shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-5 border-b border-stone-800">
-          <h2 className="font-display text-lg text-stone-100">Add Vocabulary</h2>
-          <button onClick={onClose} className="text-stone-600 hover:text-stone-300 transition-colors text-lg leading-none">✕</button>
+      <div className="bg-secondary border border-warm-700 rounded-2xl w-full max-w-lg mx-4 shadow-2xl">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-warm-800">
+          <h2 className="font-display text-lg text-primary">Add Vocabulary</h2>
+          <button onClick={onClose} className="text-warm-600 hover:text-warm-300 text-lg leading-none">✕</button>
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              {label('Word', true)}
+              <label className="block text-xs text-secondary uppercase tracking-wider mb-1.5 font-medium">
+                Word <span className="text-accent-gold">*</span>
+              </label>
               <input value={form.Word} onChange={e => set('Word', e.target.value)} placeholder="die Vorstellung" className={inputCls} autoFocus />
             </div>
             <div>
-              {label('Level')}
+              <label className="block text-xs text-secondary uppercase tracking-wider mb-1.5 font-medium">Level</label>
               <select value={form.Level} onChange={e => set('Level', e.target.value)} className={inputCls}>
                 {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
               </select>
@@ -99,39 +97,39 @@ function AddModal({ onClose, onSave }) {
           </div>
 
           <div>
-            {label('Literal Meaning')}
+            <label className="block text-xs text-secondary uppercase tracking-wider mb-1.5 font-medium">Literal Meaning</label>
             <input value={form['Literal Meaning']} onChange={e => set('Literal Meaning', e.target.value)} placeholder="the presentation / the imagining" className={inputCls} />
           </div>
 
           <div>
-            {label('Intended Meaning')}
+            <label className="block text-xs text-secondary uppercase tracking-wider mb-1.5 font-medium">Intended Meaning</label>
             <input value={form['Intended Meaning']} onChange={e => set('Intended Meaning', e.target.value)} placeholder="concept, idea, performance" className={inputCls} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              {label('Part of Speech')}
+              <label className="block text-xs text-secondary uppercase tracking-wider mb-1.5 font-medium">Part of Speech</label>
               <input value={form['Part of Speech']} onChange={e => set('Part of Speech', e.target.value)} placeholder="Noun (f.)" className={inputCls} />
             </div>
             <div>
-              {label('Source')}
+              <label className="block text-xs text-secondary uppercase tracking-wider mb-1.5 font-medium">Source</label>
               <input value={form.Source} onChange={e => set('Source', e.target.value)} placeholder="Der Spiegel" className={inputCls} />
             </div>
           </div>
 
           <div>
-            {label('Case Examples')}
-            <p className="text-xs text-stone-700 -mt-1 mb-1.5">Separate examples with &lt;br&gt;</p>
+            <label className="block text-xs text-secondary uppercase tracking-wider mb-1.5 font-medium">Case Examples</label>
+            <p className="text-xs text-warm-700 -mt-1 mb-1.5">Separate examples with &lt;br&gt;</p>
             <textarea value={form['Case Examples']} onChange={e => set('Case Examples', e.target.value)} rows={2}
               placeholder="Ich habe keine Vorstellung davon.<br>Die Vorstellung beginnt um 20 Uhr."
               className={`${inputCls} resize-none`} />
           </div>
 
-          {err && <p className="text-red-400 text-sm">{err}</p>}
+          {err && <p className="text-accent-red text-sm">{err}</p>}
 
           <div className="flex justify-end gap-3 pt-1">
-            <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-semibold text-stone-400 hover:text-stone-200 transition-colors">Cancel</button>
-            <button type="submit" disabled={saving} className="px-5 py-2 rounded-lg text-sm font-semibold bg-yellow-400 text-stone-900 hover:bg-yellow-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-semibold text-secondary hover:text-primary">Cancel</button>
+            <button type="submit" disabled={saving} className="px-5 py-2 rounded-lg text-sm font-semibold bg-accent-gold text-primary hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed">
               {saving ? 'Saving…' : 'Add Word'}
             </button>
           </div>
@@ -142,31 +140,31 @@ function AddModal({ onClose, onSave }) {
 }
 
 export default function Vocabulary() {
+  const toast = useToast()
+
   const [rows, setRows]           = useState([])
   const [loading, setLoading]     = useState(true)
+  const [error, setError]         = useState(null)
   const [showModal, setShowModal] = useState(false)
   const [showAnki,  setShowAnki]  = useState(false)
-  const [toast, setToast]         = useState(null)
 
-  function showToast(msg, type = 'success') {
-    setToast({ msg, type })
-    setTimeout(() => setToast(null), 3000)
+  function load() {
+    setLoading(true)
+    setError(null)
+    api.getVocabulary()
+      .then(data => { setRows(data); setLoading(false) })
+      .catch(e => { setError(e.message); setLoading(false) })
   }
 
-  useEffect(() => {
-    api.getVocabulary()
-      .then(setRows)
-      .catch(e => showToast('Load failed: ' + e.message, 'error'))
-      .finally(() => setLoading(false))
-  }, [])
+  useEffect(() => { load() }, [])
 
   async function handleUpdate(idx, data) {
     try {
       await api.updateVocabulary(idx, data)
       setRows(prev => prev.map((r, i) => i === idx ? { ...r, ...data } : r))
-      showToast('Saved')
+      toast.success('Saved')
     } catch (e) {
-      showToast('Update failed: ' + e.message, 'error')
+      toast.error('Update failed: ' + e.message)
     }
   }
 
@@ -174,40 +172,32 @@ export default function Vocabulary() {
     try {
       await api.deleteVocabulary(idx)
       setRows(prev => prev.filter((_, i) => i !== idx))
-      showToast('Deleted')
+      toast.success('Deleted')
     } catch (e) {
-      showToast('Delete failed: ' + e.message, 'error')
+      toast.error('Delete failed: ' + e.message)
     }
   }
 
   async function handleAdd(data) {
     const added = await api.addVocabulary(data)
     setRows(prev => [...prev, ...(Array.isArray(added) ? added : [added])])
-    showToast('Word added')
+    toast.success('Word added')
   }
 
   return (
     <div className="p-8">
-      {toast && (
-        <div className={`fixed top-5 right-5 z-50 px-4 py-3 rounded-xl text-sm font-sans shadow-xl border ${
-          toast.type === 'error' ? 'bg-red-950 text-red-300 border-red-800' : 'bg-stone-800 text-stone-200 border-stone-700'
-        }`}>
-          {toast.msg}
-        </div>
-      )}
-
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="font-display text-3xl font-semibold text-stone-100 mb-1">Vocabulary</h1>
-          <p className="text-stone-500 text-sm font-sans">
-            {loading ? 'Loading…' : `${rows.length} word${rows.length !== 1 ? 's' : ''} saved`}
+          <h1 className="font-display text-3xl font-semibold text-primary mb-1">Vocabulary</h1>
+          <p className="text-secondary text-sm font-sans">
+            {loading ? 'Loading…' : error ? 'Failed to load' : `${rows.length} word${rows.length !== 1 ? 's' : ''} saved`}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowAnki(true)}
             disabled={rows.length === 0}
-            className="px-4 py-2.5 bg-stone-800 border border-stone-700 text-stone-300 rounded-xl text-sm font-semibold hover:bg-stone-700 hover:border-stone-600 transition-colors flex items-center gap-1.5 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-2.5 bg-tertiary border border-warm-700 text-warm-300 rounded-xl text-sm font-semibold hover:bg-warm-700 hover:border-warm-600 flex items-center gap-1.5 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8">
               <path d="M8 2v8M5 7l3 3 3-3M2 11v1a2 2 0 002 2h8a2 2 0 002-2v-1" strokeLinecap="round" strokeLinejoin="round"/>
@@ -216,7 +206,7 @@ export default function Vocabulary() {
           </button>
           <button
             onClick={() => setShowModal(true)}
-            className="px-5 py-2.5 bg-yellow-400 text-stone-900 rounded-xl text-sm font-semibold hover:bg-yellow-300 transition-colors flex items-center gap-2 shrink-0"
+            className="px-5 py-2.5 bg-accent-gold text-primary rounded-xl text-sm font-semibold hover:brightness-110 flex items-center gap-2 shrink-0"
           >
             <span className="text-base leading-none font-bold">+</span>
             Add Word
@@ -224,22 +214,31 @@ export default function Vocabulary() {
         </div>
       </div>
 
-      <DataTable
-        columns={COLUMNS}
-        rows={rows}
-        onUpdate={handleUpdate}
-        onDelete={handleDelete}
-        expandKey="Case Examples"
-        levelKey="Level"
-        loading={loading}
-      />
+      {error ? (
+        <div className="p-6 bg-accent-red/10 border border-accent-red/30 rounded-xl text-accent-red text-sm font-sans flex items-center justify-between gap-4">
+          <span>Failed to load vocabulary: {error}</span>
+          <button onClick={load} className="text-xs px-3 py-1.5 bg-accent-red/20 rounded-lg hover:bg-accent-red/30 shrink-0">
+            Retry
+          </button>
+        </div>
+      ) : (
+        <DataTable
+          columns={COLUMNS}
+          rows={rows}
+          onUpdate={handleUpdate}
+          onDelete={handleDelete}
+          expandKey="Case Examples"
+          levelKey="Level"
+          loading={loading}
+        />
+      )}
 
       {showModal && <AddModal onClose={() => setShowModal(false)} onSave={handleAdd} />}
       {showAnki  && (
         <AnkiExportModal
           vocabRows={rows}
           onClose={() => setShowAnki(false)}
-          onSuccess={() => { setShowAnki(false); showToast('Anki deck downloaded') }}
+          onSuccess={() => { setShowAnki(false); toast.success('Anki deck downloaded') }}
         />
       )}
     </div>

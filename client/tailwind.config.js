@@ -9,20 +9,32 @@ export default {
     extend: {
       fontFamily: {
         display: ['Playfair Display', 'Georgia', 'serif'],
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['DM Sans', 'system-ui', 'sans-serif'],
       },
       colors: {
-        // German flag accent palette
-        'de-black': '#1a1a1a',
-        'de-red': '#cc0000',
-        'de-gold': '#ffce00',
-        // Warm dark backgrounds
-        surface: {
-          50:  '#fafaf9',
-          100: '#f5f5f4',
-          800: '#292524',
-          900: '#1c1917',
-          950: '#0c0a09',
+        // Background surfaces
+        primary:   '#0F1117',
+        secondary: '#1A1D27',
+        tertiary:  '#252836',
+        // Accent palette
+        'accent-gold':   '#D4A843',
+        'accent-red':    '#C4453C',
+        'accent-blue':   '#4A90D9',
+        'accent-green':  '#4AD97A',
+        'accent-purple': '#9B59B6',
+        // Neutral shades (warm-tinted)
+        warm: {
+          50:  '#FAF9F6',
+          100: '#F0EDE6',
+          200: '#D8D4CB',
+          300: '#B8B4AC',
+          400: '#8B8D97',
+          500: '#6B6D77',
+          600: '#4E5060',
+          700: '#363848',
+          800: '#252836',
+          900: '#1A1D27',
+          950: '#0F1117',
         },
       },
     },

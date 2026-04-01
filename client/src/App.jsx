@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { BrowserRouter, Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom'
-import Dashboard   from './pages/Dashboard.jsx'
+import Dashboard    from './pages/Dashboard.jsx'
 import TextAnalysis from './pages/TextAnalysis.jsx'
-import Vocabulary  from './pages/Vocabulary.jsx'
-import Phrases     from './pages/Phrases.jsx'
-import Practice    from './pages/Practice.jsx'
-import Grammar     from './pages/Grammar.jsx'
+import Vocabulary   from './pages/Vocabulary.jsx'
+import Phrases      from './pages/Phrases.jsx'
+import Practice     from './pages/Practice.jsx'
+import Grammar      from './pages/Grammar.jsx'
 import { ToastProvider } from './components/Toast.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 
 const NAV_ITEMS = [
   { to: '/',           label: 'Dashboard',  icon: '⊞' },
@@ -55,7 +56,6 @@ function CloseIcon() {
 function Sidebar({ theme, onToggleTheme, mobileOpen, onClose }) {
   return (
     <>
-      {/* Mobile backdrop */}
       {mobileOpen && (
         <div
           className="fixed inset-0 bg-black/60 z-20 lg:hidden"
@@ -63,12 +63,11 @@ function Sidebar({ theme, onToggleTheme, mobileOpen, onClose }) {
         />
       )}
 
-      {/* Sidebar panel */}
       <aside
         className={`
           fixed top-0 left-0 bottom-0 z-30
           lg:relative lg:z-auto lg:translate-x-0
-          w-56 shrink-0 bg-stone-900 border-r border-stone-800
+          w-56 shrink-0 bg-secondary border-r border-warm-800
           flex flex-col py-8 px-4
           transition-transform duration-300 ease-in-out
           ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -77,15 +76,14 @@ function Sidebar({ theme, onToggleTheme, mobileOpen, onClose }) {
         {/* Logo */}
         <div className="mb-10 px-2 flex items-start justify-between">
           <div>
-            <h1 className="font-display text-xl font-semibold text-stone-100 leading-tight">
+            <h1 className="font-display text-xl font-semibold text-primary leading-tight">
               Deutsch<br />
-              <span className="text-yellow-400">Lernen</span>
+              <span className="text-accent-gold">Lernen</span>
             </h1>
-            <p className="text-xs text-stone-500 mt-1 font-sans">B1 → B2</p>
+            <p className="text-xs text-secondary mt-1 font-sans">B1 → B2</p>
           </div>
-          {/* Mobile close button */}
           <button
-            className="lg:hidden text-stone-600 hover:text-stone-300 transition-colors mt-0.5"
+            className="lg:hidden text-warm-600 hover:text-warm-300 mt-0.5"
             onClick={onClose}
             aria-label="Close menu"
           >
@@ -102,10 +100,10 @@ function Sidebar({ theme, onToggleTheme, mobileOpen, onClose }) {
               end={to === '/'}
               onClick={onClose}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-sans transition-colors ${
+                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-sans ${
                   isActive
-                    ? 'bg-yellow-400/10 text-yellow-300 border-l-2 border-yellow-400'
-                    : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800'
+                    ? 'bg-accent-gold/10 text-accent-gold border-l-2 border-accent-gold'
+                    : 'text-secondary hover:text-primary hover:bg-tertiary'
                 }`
               }
             >
@@ -119,32 +117,31 @@ function Sidebar({ theme, onToggleTheme, mobileOpen, onClose }) {
         <div className="mt-auto px-2 pt-8 space-y-3">
           <button
             onClick={onToggleTheme}
-            className="flex items-center gap-2 text-xs text-stone-500 hover:text-stone-300 transition-colors font-sans"
+            className="flex items-center gap-2 text-xs text-secondary hover:text-primary font-sans"
             title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
           >
             {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
             {theme === 'dark' ? 'Light mode' : 'Dark mode'}
           </button>
-          <p className="text-xs text-stone-700 font-sans">Powered by Claude</p>
+          <p className="text-xs text-warm-700 font-sans">Powered by Claude</p>
         </div>
       </aside>
     </>
   )
 }
 
-// Mobile top bar — only visible on small screens
 function MobileBar({ onOpenMenu }) {
   return (
-    <div className="lg:hidden fixed top-0 left-0 right-0 z-10 h-14 bg-stone-900/95 backdrop-blur border-b border-stone-800 flex items-center px-4 gap-3">
+    <div className="lg:hidden fixed top-0 left-0 right-0 z-10 h-14 bg-secondary/95 backdrop-blur border-b border-warm-800 flex items-center px-4 gap-3">
       <button
         onClick={onOpenMenu}
-        className="text-stone-400 hover:text-stone-200 transition-colors"
+        className="text-secondary hover:text-primary"
         aria-label="Open menu"
       >
         <MenuIcon />
       </button>
-      <span className="font-display text-base font-semibold text-stone-100">
-        Deutsch <span className="text-yellow-400">Lernen</span>
+      <span className="font-display text-base font-semibold text-primary">
+        Deutsch <span className="text-accent-gold">Lernen</span>
       </span>
     </div>
   )
@@ -155,12 +152,12 @@ function AnimatedRoutes() {
   return (
     <div key={location.pathname} className="page-enter">
       <Routes location={location}>
-        <Route path="/"           element={<Dashboard />} />
-        <Route path="/analyze"    element={<TextAnalysis />} />
-        <Route path="/vocabulary" element={<Vocabulary />} />
-        <Route path="/phrases"    element={<Phrases />} />
-        <Route path="/practice"   element={<Practice />} />
-        <Route path="/grammar"    element={<Grammar />} />
+        <Route path="/"           element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+        <Route path="/analyze"    element={<ErrorBoundary><TextAnalysis /></ErrorBoundary>} />
+        <Route path="/vocabulary" element={<ErrorBoundary><Vocabulary /></ErrorBoundary>} />
+        <Route path="/phrases"    element={<ErrorBoundary><Phrases /></ErrorBoundary>} />
+        <Route path="/practice"   element={<ErrorBoundary><Practice /></ErrorBoundary>} />
+        <Route path="/grammar"    element={<ErrorBoundary><Grammar /></ErrorBoundary>} />
         <Route path="*"           element={<Navigate to="/" replace />} />
       </Routes>
     </div>
@@ -173,7 +170,6 @@ export default function App() {
   })
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  // Apply dark class to <html> based on theme
   useEffect(() => {
     const root = document.documentElement
     if (theme === 'dark') {
@@ -184,17 +180,17 @@ export default function App() {
     try { localStorage.setItem('theme', theme) } catch {}
   }, [theme])
 
-  const toggleTheme = useCallback(() => {
-    setTheme(t => t === 'dark' ? 'light' : 'dark')
-  }, [])
-
+  const toggleTheme  = useCallback(() => setTheme(t => t === 'dark' ? 'light' : 'dark'), [])
   const closeSidebar = useCallback(() => setSidebarOpen(false), [])
   const openSidebar  = useCallback(() => setSidebarOpen(true), [])
 
   return (
     <BrowserRouter>
       <ToastProvider>
-        <div className={`flex min-h-screen font-sans ${theme === 'dark' ? 'bg-stone-950 text-stone-100' : 'bg-stone-100 text-stone-900'}`}>
+        <div
+          className="flex min-h-screen font-sans"
+          style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}
+        >
           <Sidebar
             theme={theme}
             onToggleTheme={toggleTheme}

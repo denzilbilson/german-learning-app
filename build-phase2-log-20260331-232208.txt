@@ -1,0 +1,47 @@
+[0;32m[23:22:08][0m Checking prerequisites...
+[0;32m[23:22:08][0m All prerequisites met.
+[0;32m[23:22:08][0m ============================================
+[0;32m[23:22:08][0m PHASE 2 BUILD
+[0;32m[23:22:08][0m Starting from Phase: 7
+[0;32m[23:22:08][0m Phase 7: Design + Error Handling (Sonnet)
+[0;32m[23:22:08][0m Phases 8-10: Features + Docs (Sonnet)
+[0;32m[23:22:08][0m Phase 11: Tests (Sonnet)
+[0;32m[23:22:08][0m Phases 12-13: Review (Sonnet)
+[0;32m[23:22:08][0m Phase 14: Final Review (Opus)
+[0;32m[23:22:08][0m Estimated cost: $70–100
+[0;32m[23:22:08][0m Log file: build-phase2-log-20260331-232208.txt
+[0;32m[23:22:08][0m ============================================
+[0;32m[23:22:08][0m ============================================
+[0;32m[23:22:08][0m PHASE 7: Design System + Error Handling Retrofit
+[0;32m[23:22:08][0m Model: sonnet | Budget cap: $22
+[0;32m[23:22:08][0m ============================================
+Everything passes. Here's a summary of every change made:
+
+---
+
+## Phase 7 complete
+
+### Part A — Design System
+
+**Foundation files updated:**
+- `client/index.html` — replaced Inter with **DM Sans** (body font)
+- `client/tailwind.config.js` — replaced old color palette with full semantic system: `primary/secondary/tertiary` surfaces, `accent-gold/red/blue/green/purple` accents, and a `warm` neutral scale replacing `stone`
+- `client/src/index.css` — added CSS custom properties (`--bg-primary` → `--accent-purple`), antialiasing, smooth scroll, `::selection` highlight, custom scrollbar using new palette, and **CSS overrides for `text-primary`/`text-secondary`** so they resolve to warm white and muted gray (not the dark bg colors Tailwind would generate)
+
+**All component & page files updated** — every `stone-*`, `yellow-*`, and `indigo-*` class replaced:
+- `App.jsx` — sidebar, nav active states, mobile bar all use new palette
+- All 6 pages + all 5 components — `bg-secondary`, `bg-tertiary`, `text-primary`, `text-secondary`, `text-accent-gold`, `bg-accent-gold`, etc. throughout
+- All buttons: `bg-accent-gold text-primary hover:brightness-110`
+- All inputs: `bg-tertiary focus:ring-accent-gold/40 focus:border-accent-gold/60`
+
+---
+
+### Part B — Error Handling
+
+- **`claude-service.js`** — 120s timeout, exponential backoff on 429 (2s/4s/8s, 3 retries), friendly messages for auth/network/timeout errors, timestamped logging
+- **`markdown-store.js`** — auto-creates missing files with correct headers, skips/warns on malformed rows, escapes pipe chars in cells, descriptive out-of-bounds errors
+- **`server/index.js`** — request logger (method/path/status/ms), global error handler (no stack traces in prod), uncaught exception + unhandled rejection handlers, startup data-dir validation
+- **`api.js`** — 30s `AbortController` timeout on every request, auto-retry once on 5xx after 2s, friendly "Server not reachable" for network failures, non-JSON response guard
+- **`ErrorBoundary.jsx`** — new class component catching render crashes, styled with design system, "Try Again" button; wraps every page in `App.jsx`
+- **`Toast.jsx`** — updated to use new color palette; toasts now appear bottom-right
+- **All pages** — replaced local `showToast` state with `useToast()` hook; added retry buttons on load errors; `TextAnalysis` now has character count + 5000-char warning; `Practice` shows link to `/vocabulary` when empty; `Grammar`/`Vocabulary`/`Phrases` all have error + retry states

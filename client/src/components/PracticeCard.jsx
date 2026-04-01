@@ -8,37 +8,36 @@ function FlashCard({ question, onComplete }) {
 
   return (
     <div className="text-center">
-      {/* Card face */}
       <div
-        className={`rounded-2xl border border-stone-800 bg-stone-900 mb-8 overflow-hidden cursor-pointer select-none transition-colors ${!flipped ? 'hover:border-stone-700' : ''}`}
+        className={`rounded-2xl border border-warm-800 bg-secondary mb-8 overflow-hidden cursor-pointer select-none ${!flipped ? 'hover:border-warm-700' : ''}`}
         style={{ minHeight: '200px' }}
         onClick={() => !flipped && setFlipped(true)}
       >
         {!flipped ? (
           <div className="flex flex-col items-center justify-center px-10 py-12">
-            <p className="font-display text-5xl text-stone-100 mb-4">{question.front}</p>
+            <p className="font-display text-5xl text-primary mb-4">{question.front}</p>
             {question.partOfSpeech && (
-              <p className="text-stone-500 font-sans text-sm">{question.partOfSpeech}</p>
+              <p className="text-secondary font-sans text-sm">{question.partOfSpeech}</p>
             )}
             {question.level && (
-              <span className="mt-4 px-2.5 py-0.5 bg-stone-800 text-stone-500 rounded text-xs font-sans">
+              <span className="mt-4 px-2.5 py-0.5 bg-tertiary text-secondary rounded text-xs font-sans">
                 {question.level}
               </span>
             )}
-            <p className="text-stone-700 font-sans text-xs mt-8 tracking-wider">tap to reveal</p>
+            <p className="text-warm-700 font-sans text-xs mt-8 tracking-wider">tap to reveal</p>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center px-10 py-12">
-            <p className="text-stone-500 font-sans text-xs mb-2 tracking-widest uppercase">Meaning</p>
-            <p className="font-display text-3xl text-yellow-300 mb-2">{question.back}</p>
+            <p className="text-secondary font-sans text-xs mb-2 tracking-widest uppercase">Meaning</p>
+            <p className="font-display text-3xl text-accent-gold mb-2">{question.back}</p>
             {question.literalMeaning && question.literalMeaning !== question.back && (
-              <p className="text-stone-500 font-sans text-sm">
+              <p className="text-secondary font-sans text-sm">
                 literal: <span className="italic">{question.literalMeaning}</span>
               </p>
             )}
             {question.caseExamples && (
               <p
-                className="text-stone-500 font-sans text-xs mt-4 text-center max-w-sm leading-relaxed"
+                className="text-secondary font-sans text-xs mt-4 text-center max-w-sm leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: question.caseExamples }}
               />
             )}
@@ -46,18 +45,17 @@ function FlashCard({ question, onComplete }) {
         )}
       </div>
 
-      {/* Self-report buttons — only after flip */}
       {flipped && (
         <div className="flex gap-4 justify-center">
           <button
             onClick={() => onComplete({ correct: false, word: question.front })}
-            className="px-7 py-3 bg-red-900/30 border border-red-700/40 text-red-300 rounded-xl font-sans text-sm font-semibold hover:bg-red-900/50 transition-colors"
+            className="px-7 py-3 bg-accent-red/10 border border-accent-red/30 text-accent-red rounded-xl font-sans text-sm font-semibold hover:bg-accent-red/20"
           >
             ✗ Missed it
           </button>
           <button
             onClick={() => onComplete({ correct: true, word: question.front })}
-            className="px-7 py-3 bg-green-900/30 border border-green-700/40 text-green-300 rounded-xl font-sans text-sm font-semibold hover:bg-green-900/50 transition-colors"
+            className="px-7 py-3 bg-accent-green/10 border border-accent-green/30 text-accent-green rounded-xl font-sans text-sm font-semibold hover:bg-accent-green/20"
           >
             ✓ Got it
           </button>
@@ -74,25 +72,25 @@ function Feedback({ feedback, onContinue, extra }) {
   return (
     <div
       className={`mt-6 rounded-xl p-5 border ${
-        ok ? 'bg-green-900/20 border-green-700/40' : 'bg-red-900/20 border-red-700/40'
+        ok ? 'bg-accent-green/10 border-accent-green/30' : 'bg-accent-red/10 border-accent-red/30'
       }`}
     >
-      <p className={`font-semibold font-sans text-sm mb-2 ${ok ? 'text-green-400' : 'text-red-400'}`}>
+      <p className={`font-semibold font-sans text-sm mb-2 ${ok ? 'text-accent-green' : 'text-accent-red'}`}>
         {ok ? '✓ Correct' : '✗ Incorrect'}
       </p>
       {feedback.explanation && (
-        <p className="text-stone-300 font-sans text-sm leading-relaxed">{feedback.explanation}</p>
+        <p className="text-warm-300 font-sans text-sm leading-relaxed">{feedback.explanation}</p>
       )}
       {!ok && feedback.modelAnswer && (
-        <p className="text-stone-400 font-sans text-sm mt-3">
-          <span className="text-stone-500">Model answer: </span>
-          <span className="text-stone-200 italic">{feedback.modelAnswer}</span>
+        <p className="text-secondary font-sans text-sm mt-3">
+          <span className="text-warm-500">Model answer: </span>
+          <span className="text-warm-200 italic">{feedback.modelAnswer}</span>
         </p>
       )}
       {extra}
       <button
         onClick={onContinue}
-        className="mt-4 px-6 py-2.5 bg-stone-700 text-stone-200 rounded-xl text-sm font-semibold font-sans hover:bg-stone-600 transition-colors"
+        className="mt-4 px-6 py-2.5 bg-tertiary text-warm-200 rounded-xl text-sm font-semibold font-sans hover:bg-warm-700"
       >
         Continue →
       </button>
@@ -102,36 +100,23 @@ function Feedback({ feedback, onContinue, extra }) {
 
 // ── Main PracticeCard ─────────────────────────────────────────────────────────
 
-/**
- * Renders a single practice question for any mode.
- *
- * Props:
- *   question  – question object from /api/practice/generate
- *   onComplete(result) – called with { correct: bool, word: string }
- */
 export default function PracticeCard({ question, onComplete }) {
   const { type } = question
 
-  const [userAnswer, setUserAnswer] = useState('')
+  const [userAnswer, setUserAnswer]   = useState('')
   const [selectedIdx, setSelectedIdx] = useState(null)
-  const [feedback, setFeedback] = useState(null)
-  const [checking, setChecking] = useState(false)
+  const [feedback, setFeedback]       = useState(null)
+  const [checking, setChecking]       = useState(false)
 
   const submitted = feedback !== null
 
-  // ── Helpers ─────────────────────────────────────────────────────────
+  const inputCls = 'w-full bg-secondary border border-warm-700 rounded-xl px-4 py-3 text-primary font-sans text-base focus:outline-none focus:ring-2 focus:ring-accent-gold/40 focus:border-accent-gold/60 placeholder-warm-600'
 
   async function checkWithClaude(answer) {
     setChecking(true)
-    const correctAnswer =
-      question.correctAnswer ?? question.modelAnswer ?? ''
+    const correctAnswer = question.correctAnswer ?? question.modelAnswer ?? ''
     try {
-      const result = await api.checkAnswer({
-        question,
-        userAnswer: answer,
-        correctAnswer,
-        mode: type,
-      })
+      const result = await api.checkAnswer({ question, userAnswer: answer, correctAnswer, mode: type })
       setFeedback(result)
     } catch (err) {
       setFeedback({ correct: false, explanation: `Could not check answer: ${err.message}` })
@@ -141,13 +126,7 @@ export default function PracticeCard({ question, onComplete }) {
   }
 
   function wordForSummary() {
-    return (
-      question.word ||
-      question.targetWord ||
-      question.front ||
-      question.keyWords?.[0] ||
-      ''
-    )
+    return question.word || question.targetWord || question.front || question.keyWords?.[0] || ''
   }
 
   // ── Flashcard ────────────────────────────────────────────────────────
@@ -173,28 +152,26 @@ export default function PracticeCard({ question, onComplete }) {
 
     return (
       <div>
-        <p className="font-display text-2xl text-stone-100 leading-snug mb-8">
+        <p className="font-display text-2xl text-primary leading-snug mb-8">
           {question.prompt}
         </p>
 
         <div className="grid gap-3">
           {question.options.map((opt, idx) => {
-            let cls =
-              'w-full text-left px-5 py-3.5 rounded-xl border font-sans text-sm transition-all '
+            let cls = 'w-full text-left px-5 py-3.5 rounded-xl border font-sans text-sm '
             if (!submitted) {
-              cls +=
-                'bg-stone-900 border-stone-700 text-stone-200 hover:border-yellow-500/50 hover:bg-stone-800 cursor-pointer'
+              cls += 'bg-secondary border-warm-700 text-primary hover:border-accent-gold/50 hover:bg-tertiary cursor-pointer'
             } else if (idx === question.correctIndex) {
-              cls += 'bg-green-900/30 border-green-600/50 text-green-300 cursor-default'
+              cls += 'bg-accent-green/10 border-accent-green/50 text-accent-green cursor-default'
             } else if (idx === selectedIdx) {
-              cls += 'bg-red-900/30 border-red-600/50 text-red-300 cursor-default'
+              cls += 'bg-accent-red/10 border-accent-red/50 text-accent-red cursor-default'
             } else {
-              cls += 'bg-stone-900/40 border-stone-800 text-stone-600 cursor-default'
+              cls += 'bg-secondary/40 border-warm-800 text-warm-600 cursor-default'
             }
 
             return (
               <button key={idx} className={cls} onClick={() => handleOption(idx)} disabled={submitted}>
-                <span className="text-stone-500 mr-3 font-mono text-xs">
+                <span className="text-secondary mr-3 font-mono text-xs">
                   {String.fromCharCode(65 + idx)}
                 </span>
                 {opt}
@@ -206,19 +183,15 @@ export default function PracticeCard({ question, onComplete }) {
         {submitted && (
           <div
             className={`mt-6 rounded-xl p-4 border ${
-              feedback.correct ? 'bg-green-900/20 border-green-700/40' : 'bg-red-900/20 border-red-700/40'
+              feedback.correct ? 'bg-accent-green/10 border-accent-green/30' : 'bg-accent-red/10 border-accent-red/30'
             }`}
           >
-            <p
-              className={`font-semibold font-sans text-sm mb-3 ${
-                feedback.correct ? 'text-green-400' : 'text-red-400'
-              }`}
-            >
+            <p className={`font-semibold font-sans text-sm mb-3 ${feedback.correct ? 'text-accent-green' : 'text-accent-red'}`}>
               {feedback.correct ? '✓ Correct' : '✗ Incorrect'} — {feedback.explanation}
             </p>
             <button
               onClick={() => onComplete({ correct: feedback.correct, word: wordForSummary() })}
-              className="px-6 py-2.5 bg-stone-700 text-stone-200 rounded-xl text-sm font-semibold font-sans hover:bg-stone-600 transition-colors"
+              className="px-6 py-2.5 bg-tertiary text-warm-200 rounded-xl text-sm font-semibold font-sans hover:bg-warm-700"
             >
               Continue →
             </button>
@@ -239,20 +212,19 @@ export default function PracticeCard({ question, onComplete }) {
 
   return (
     <div>
-      {/* Question prompt */}
       {type === 'fill-blank' && (
         <div>
-          <p className="text-stone-500 font-sans text-xs mb-5 uppercase tracking-wider">
+          <p className="text-secondary font-sans text-xs mb-5 uppercase tracking-wider">
             Fill in the blank
           </p>
-          <p className="font-display text-2xl text-stone-100 leading-relaxed mb-3">
+          <p className="font-display text-2xl text-primary leading-relaxed mb-3">
             {question.sentence}
           </p>
           {question.hint && (
-            <p className="text-stone-500 font-sans text-sm italic mb-6">{question.hint}</p>
+            <p className="text-secondary font-sans text-sm italic mb-6">{question.hint}</p>
           )}
           {question.englishTranslation && (
-            <p className="text-stone-600 font-sans text-xs mb-6">
+            <p className="text-warm-600 font-sans text-xs mb-6">
               EN: {question.englishTranslation}
             </p>
           )}
@@ -261,15 +233,15 @@ export default function PracticeCard({ question, onComplete }) {
 
       {type === 'case-drill' && (
         <div>
-          <p className="text-stone-500 font-sans text-xs mb-5 uppercase tracking-wider">
+          <p className="text-secondary font-sans text-xs mb-5 uppercase tracking-wider">
             Case Drill
             {question.targetCase && (
-              <span className="ml-2 px-2 py-0.5 bg-stone-800 text-stone-400 rounded text-xs normal-case tracking-normal">
+              <span className="ml-2 px-2 py-0.5 bg-tertiary text-secondary rounded text-xs normal-case tracking-normal">
                 {question.targetCase}
               </span>
             )}
           </p>
-          <p className="font-display text-2xl text-stone-100 leading-relaxed mb-6">
+          <p className="font-display text-2xl text-primary leading-relaxed mb-6">
             {question.prompt}
           </p>
         </div>
@@ -277,19 +249,18 @@ export default function PracticeCard({ question, onComplete }) {
 
       {type === 'translation' && (
         <div>
-          <p className="text-stone-500 font-sans text-xs mb-5 uppercase tracking-wider">
+          <p className="text-secondary font-sans text-xs mb-5 uppercase tracking-wider">
             Translate to German
           </p>
-          <p className="font-display text-3xl text-stone-100 leading-relaxed mb-3">
+          <p className="font-display text-3xl text-primary leading-relaxed mb-3">
             {question.englishPrompt}
           </p>
           {question.hint && (
-            <p className="text-stone-500 font-sans text-sm italic mb-6">{question.hint}</p>
+            <p className="text-secondary font-sans text-sm italic mb-6">{question.hint}</p>
           )}
         </div>
       )}
 
-      {/* Answer input */}
       {!submitted && (
         <div>
           {isTextarea ? (
@@ -298,38 +269,35 @@ export default function PracticeCard({ question, onComplete }) {
               onChange={e => setUserAnswer(e.target.value)}
               placeholder="Auf Deutsch…"
               rows={3}
-              className="w-full bg-stone-900 border border-stone-700 rounded-xl px-4 py-3 text-stone-100 font-sans text-base resize-none focus:outline-none focus:border-yellow-500/60 placeholder-stone-600"
+              className={`${inputCls} resize-none`}
             />
           ) : (
             <input
               value={userAnswer}
               onChange={e => setUserAnswer(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleCheck()}
-              placeholder={
-                type === 'fill-blank' ? 'Type the missing word…' : 'Enter the correct form…'
-              }
-              className="w-full bg-stone-900 border border-stone-700 rounded-xl px-4 py-3 text-stone-100 font-sans text-base focus:outline-none focus:border-yellow-500/60 placeholder-stone-600"
+              placeholder={type === 'fill-blank' ? 'Type the missing word…' : 'Enter the correct form…'}
+              className={inputCls}
             />
           )}
 
           <button
             onClick={handleCheck}
             disabled={checking || !userAnswer.trim()}
-            className="mt-3 px-6 py-2.5 bg-yellow-400 text-stone-950 font-semibold rounded-xl text-sm font-sans hover:bg-yellow-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="mt-3 px-6 py-2.5 bg-accent-gold text-primary font-semibold rounded-xl text-sm font-sans hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {checking ? 'Checking…' : 'Check Answer'}
           </button>
         </div>
       )}
 
-      {/* Feedback */}
       {submitted && (
         <Feedback
           feedback={feedback}
           onContinue={() => onComplete({ correct: feedback.correct, word: wordForSummary() })}
           extra={
             type === 'case-drill' && question.rule ? (
-              <p className="text-stone-400 font-sans text-xs mt-3 p-3 bg-stone-800/60 rounded-lg leading-relaxed">
+              <p className="text-secondary font-sans text-xs mt-3 p-3 bg-tertiary/60 rounded-lg leading-relaxed">
                 Rule: {question.rule}
               </p>
             ) : null
