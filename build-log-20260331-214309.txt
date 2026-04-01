@@ -79,3 +79,52 @@ Phase 2 is complete. Here's what was built:
 - `client/src/pages/Vocabulary.jsx` — full page with DataTable, Add Word modal (all fields including Case Examples), colored POS badges, level badges, toast notifications.
 - `client/src/pages/Phrases.jsx` — same pattern, simpler form.
 [0;32m[21:57:13][0m Committing Phase 2: Data Layer + Database UI
+[0;32m[21:57:14][0m Phase 2 committed and pushed.
+[0;32m[21:57:14][0m Phase 2 complete.
+
+[0;32m[21:57:14][0m ============================================
+[0;32m[21:57:14][0m STARTING PHASE 3: Text Analysis Pipeline
+[0;32m[21:57:14][0m Budget limit: $20
+[0;32m[21:57:14][0m ============================================
+Phase 3 is complete. Here's a summary of everything built:
+
+---
+
+## Phase 3: Text Analysis — Done
+
+### New files
+
+**`server/services/claude-service.js`**
+- Wraps `@anthropic-ai/sdk`, reads `ANTHROPIC_API_KEY` from env
+- `callClaude(systemPrompt, userMessage, maxRetries=2)` → parsed JSON
+- Strips markdown code fences from responses before parsing
+- Retries up to 2× on `SyntaxError` (malformed JSON), throws immediately on API/network errors
+
+**`server/prompts/analyze-text.js`**
+- Detailed system prompt calibrated for B1→B2 learner
+- Requests structured JSON: `translations` (line-by-line), `vocabulary` (word + literal/intended meaning + POS + case examples + CEFR level), `phrases` (idioms/collocations), `grammar` (2–5 rules with plain-language explanations)
+- Enforces JSON-only output
+
+**`server/routes/analyze.js`**
+- `POST /api/analyze` — calls Claude, saves result to `data/analysis/analysis-<timestamp>.json`, returns full result
+- `POST /api/analyze/add` — duplicate-checks against existing vocab/phrases (case-insensitive), adds new entries to markdown files, returns `{ added, skipped }` counts
+- `GET /api/analysis` — lists saved analyses with metadata (vocab count, phrase count, preview)
+- `GET /api/analysis/:filename` — returns a specific saved analysis; filename sanitized with regex to prevent path traversal
+
+**`client/src/components/AnalysisReader.jsx`** (360 lines)
+- `TranslationSection` — two-column German/English table, alternating row backgrounds
+- `VocabSection` — sortable table with checkboxes, expandable rows for case examples, POS badges (colour-matched to Vocabulary page), CEFR level badges
+- `PhrasesSection` — card-per-phrase with checkboxes, level badge
+- `GrammarSection` — accordion with numbered topics, first one open by default
+
+**`client/src/pages/TextAnalysis.jsx`** (280 lines)
+- Three render phases: `idle` (input form), `loading` (spinner), `done` (results)
+- Sticky action bar in `done` state: source label, item counts, "← New Analysis", "Add Selected (n)", "Add All to Databases"
+- All vocab/phrases pre-selected on load; individual toggle + select-all/deselect-all per section
+- ⌘+Enter shortcut to submit
+- Toast notifications for add results (skipped count included)
+
+### Modified files
+
+**`server/index.js`** — added `import analyzeRouter` and two mount points: `/api/analyze` (POST routes) and `/api/analysis` (GET routes)
+[0;32m[22:07:09][0m Committing Phase 3: Text Analysis Pipeline

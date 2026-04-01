@@ -3,6 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import vocabularyRouter from './routes/vocabulary.js'
 import phrasesRouter    from './routes/phrases.js'
+import analyzeRouter    from './routes/analyze.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -19,13 +20,17 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/vocabulary', vocabularyRouter)
 app.use('/api/phrases',    phrasesRouter)
 
+// ── Phase 3 routes ────────────────────────────────────────────────
+// POST /api/analyze, POST /api/analyze/add
+app.use('/api/analyze',  analyzeRouter)
+// GET /api/analysis, GET /api/analysis/:filename
+app.use('/api/analysis', analyzeRouter)
+
 // ── Stub routes (wired in later phases) ──────────────────────────
-// import analyzeRouter   from './routes/analyze.js'
 // import ankiRouter      from './routes/anki.js'
 // import practiceRouter  from './routes/practice.js'
 // import progressRouter  from './routes/progress.js'
 // import dashboardRouter from './routes/dashboard.js'
-// app.use('/api/analyze',   analyzeRouter)
 // app.use('/api/anki',      ankiRouter)
 // app.use('/api/practice',  practiceRouter)
 // app.use('/api/progress',  progressRouter)
