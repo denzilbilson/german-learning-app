@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import DataTable from '../components/DataTable.jsx'
 import AnkiExportModal from '../components/AnkiExportModal.jsx'
+import SpeakButton from '../components/SpeakButton.jsx'
+import GermanKeyboard from '../components/GermanKeyboard.jsx'
 import { api } from '../services/api.js'
 import { useToast } from '../components/Toast.jsx'
 
@@ -11,8 +13,17 @@ function LevelBadge({ val }) {
   return <span className="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-accent-gold/10 text-accent-gold">{val}</span>
 }
 
+function PhraseCell({ val }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="font-medium text-primary italic">{val}</span>
+      <SpeakButton text={val} />
+    </div>
+  )
+}
+
 const COLUMNS = [
-  { key: 'Phrase',          label: 'Phrase',  sortable: true,  editable: true,  textClass: 'font-medium text-primary italic' },
+  { key: 'Phrase',          label: 'Phrase',  sortable: true,  editable: true,  render: (val) => <PhraseCell val={val} /> },
   { key: 'English Meaning', label: 'Meaning', sortable: false, editable: true,  textClass: 'text-warm-300' },
   { key: 'Level',           label: 'Level',   sortable: true,  editable: true,  options: LEVELS, render: (val) => <LevelBadge val={val} /> },
   { key: 'Source',          label: 'Source',  sortable: false, editable: true,  textClass: 'text-secondary text-xs' },
@@ -89,6 +100,8 @@ function AddModal({ onClose, onSave }) {
             </div>
           </div>
 
+          <GermanKeyboard className="justify-end" />
+
           {err && <p className="text-accent-red text-sm">{err}</p>}
 
           <div className="flex justify-end gap-3 pt-1">
@@ -158,6 +171,7 @@ export default function Phrases() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <GermanKeyboard />
           <button
             onClick={() => setShowAnki(true)}
             disabled={rows.length === 0}

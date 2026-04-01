@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { api } from '../services/api.js'
+import SpeakButton from './SpeakButton.jsx'
+import GenderBadge from './GenderBadge.jsx'
 
 // ── Flashcard ─────────────────────────────────────────────────────────────────
 
@@ -15,9 +17,15 @@ function FlashCard({ question, onComplete }) {
       >
         {!flipped ? (
           <div className="flex flex-col items-center justify-center px-10 py-12">
-            <p className="font-display text-5xl text-primary mb-4">{question.front}</p>
+            <div className="flex items-center gap-3 mb-4">
+              <p className="font-display text-5xl text-primary">{question.front}</p>
+              <SpeakButton text={question.front} />
+            </div>
             {question.partOfSpeech && (
-              <p className="text-secondary font-sans text-sm">{question.partOfSpeech}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-secondary font-sans text-sm">{question.partOfSpeech}</p>
+                <GenderBadge pos={question.partOfSpeech} />
+              </div>
             )}
             {question.level && (
               <span className="mt-4 px-2.5 py-0.5 bg-tertiary text-secondary rounded text-xs font-sans">
@@ -59,6 +67,107 @@ function FlashCard({ question, onComplete }) {
           >
             ✓ Got it
           </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Article Drill ─────────────────────────────────────────────────────────────
+
+const ARTICLE_CONFIG = {
+  masculine: { article: 'der',  color: '#4A90D9', bg: 'rgba(74,144,217,0.15)',  border: 'rgba(74,144,217,0.5)' },
+  feminine:  { article: 'die',  color: '#D94A6B', bg: 'rgba(217,74,107,0.15)', border: 'rgba(217,74,107,0.5)' },
+  neuter:    { article: 'das',  color: '#4AD97A', bg: 'rgba(74,217,122,0.15)', border: 'rgba(74,217,122,0.5)' },
+  plural:    { article: 'die (pl.)', color: '#9B59B6', bg: 'rgba(155,89,182,0.15)', border: 'rgba(155,89,182,0.5)' },
+}
+
+const ARTICLE_OPTIONS = ['masculine', 'feminine', 'neuter', 'plural']
+
+function ArticleDrill({ question, onComplete }) {
+  const [chosen, setChosen] = useState(null)
+
+  function handleClick(gender) {
+    if (chosen) return
+    setChosen(gender)
+    const correct = gender === question.answer
+    // Short delay then advance
+    setTimeout(() => {
+      onComplete({ correct, word: question.word })
+    }, 1200)
+  }
+
+  const correct = chosen === question.answer
+
+  return (
+    <div className="text-center">
+      <div className="rounded-2xl border border-warm-800 bg-secondary mb-8 px-10 py-12">
+        <p className="text-secondary font-sans text-xs mb-5 uppercase tracking-widest">Which article?</p>
+        <div className="flex items-center justify-center gap-3 mb-3">
+          <p className="font-display text-6xl text-primary">{question.front}</p>
+          <SpeakButton text={question.front} />
+        </div>
+        {question.meaning && (
+          <p className="text-secondary font-sans text-sm italic">{question.meaning}</p>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {ARTICLE_OPTIONS.map(gender => {
+          const cfg = ARTICLE_CONFIG[gender]
+          let borderColor = 'rgba(54,56,72,1)' // warm-800
+          let bgColor     = 'transparent'
+          let textColor   = '#B8B4AC'          // warm-300
+
+          if (chosen) {
+            if (gender === question.answer) {
+              borderColor = cfg.border
+              bgColor     = cfg.bg
+              textColor   = cfg.color
+            } else if (gender === chosen) {
+              borderColor = 'rgba(196,69,60,0.5)'
+              bgColor     = 'rgba(196,69,60,0.1)'
+              textColor   = '#C4453C'
+            } else {
+              textColor   = '#4E5060'
+            }
+          }
+
+          return (
+            <button
+              key={gender}
+              onClick={() => handleClick(gender)}
+              disabled={!!chosen}
+              className="py-4 rounded-xl border-2 text-base font-semibold font-sans transition-all duration-200 disabled:cursor-default"
+              style={{ borderColor, backgroundColor: bgColor, color: textColor }}
+            >
+              {gender === question.answer && chosen ? (
+                <span>{cfg.article} ✓</span>
+              ) : chosen === gender && !correct ? (
+                <span>{cfg.article} ✗</span>
+              ) : (
+                cfg.article
+              )}
+            </button>
+          )
+        })}
+      </div>
+
+      {chosen && (
+        <div
+          className={`mt-6 rounded-xl p-4 border text-sm font-sans ${
+            correct
+              ? 'bg-accent-green/10 border-accent-green/30 text-accent-green'
+              : 'bg-accent-red/10 border-accent-red/30 text-accent-red'
+          }`}
+        >
+          {correct ? (
+            <span>✓ Correct! <span className="font-semibold">{ARTICLE_CONFIG[question.answer].article} {question.front}</span></span>
+          ) : (
+            <span>✗ It's <span className="font-semibold" style={{ color: ARTICLE_CONFIG[question.answer].color }}>
+              {ARTICLE_CONFIG[question.answer].article} {question.front}
+            </span></span>
+          )}
         </div>
       )}
     </div>
@@ -130,9 +239,13 @@ export default function PracticeCard({ question, onComplete }) {
   }
 
   // ── Flashcard ────────────────────────────────────────────────────────
-
   if (type === 'flashcard') {
     return <FlashCard question={question} onComplete={onComplete} />
+  }
+
+  // ── Article Drill ────────────────────────────────────────────────────
+  if (type === 'article-drill') {
+    return <ArticleDrill question={question} onComplete={onComplete} />
   }
 
   // ── Quiz ─────────────────────────────────────────────────────────────
@@ -152,9 +265,12 @@ export default function PracticeCard({ question, onComplete }) {
 
     return (
       <div>
-        <p className="font-display text-2xl text-primary leading-snug mb-8">
-          {question.prompt}
-        </p>
+        <div className="flex items-start gap-3 mb-8">
+          <p className="font-display text-2xl text-primary leading-snug flex-1">
+            {question.prompt}
+          </p>
+          <SpeakButton text={question.prompt} />
+        </div>
 
         <div className="grid gap-3">
           {question.options.map((opt, idx) => {
@@ -217,9 +333,12 @@ export default function PracticeCard({ question, onComplete }) {
           <p className="text-secondary font-sans text-xs mb-5 uppercase tracking-wider">
             Fill in the blank
           </p>
-          <p className="font-display text-2xl text-primary leading-relaxed mb-3">
-            {question.sentence}
-          </p>
+          <div className="flex items-start gap-3 mb-3">
+            <p className="font-display text-2xl text-primary leading-relaxed flex-1">
+              {question.sentence}
+            </p>
+            <SpeakButton text={question.sentence} />
+          </div>
           {question.hint && (
             <p className="text-secondary font-sans text-sm italic mb-6">{question.hint}</p>
           )}
@@ -241,9 +360,12 @@ export default function PracticeCard({ question, onComplete }) {
               </span>
             )}
           </p>
-          <p className="font-display text-2xl text-primary leading-relaxed mb-6">
-            {question.prompt}
-          </p>
+          <div className="flex items-start gap-3 mb-6">
+            <p className="font-display text-2xl text-primary leading-relaxed flex-1">
+              {question.prompt}
+            </p>
+            <SpeakButton text={question.prompt} />
+          </div>
         </div>
       )}
 

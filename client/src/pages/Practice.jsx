@@ -3,13 +3,16 @@ import { Link } from 'react-router-dom'
 import { api } from '../services/api.js'
 import PracticeCard from '../components/PracticeCard.jsx'
 import { useToast } from '../components/Toast.jsx'
+import { detectGender } from '../components/GenderBadge.jsx'
+import SpeakButton from '../components/SpeakButton.jsx'
 
 const MODES = [
-  { id: 'flashcard',   label: 'Flashcard',        desc: 'Flip through your vocabulary cards',             icon: '⧉', count: 20 },
-  { id: 'quiz',        label: 'Quiz',              desc: 'Multiple choice — German to English and back',   icon: '⊕', count: 10 },
-  { id: 'fill-blank',  label: 'Fill in the Blank', desc: 'Complete sentences with the right word',         icon: '⊘', count: 8  },
-  { id: 'case-drill',  label: 'Case Drill',        desc: 'Practice German cases and declension',           icon: '⊛', count: 8  },
-  { id: 'translation', label: 'Translation',       desc: 'Translate sentences using your vocabulary',      icon: '⇄', count: 6  },
+  { id: 'flashcard',     label: 'Flashcard',        desc: 'Flip through your vocabulary cards',             icon: '⧉', count: 20 },
+  { id: 'quiz',          label: 'Quiz',              desc: 'Multiple choice — German to English and back',   icon: '⊕', count: 10 },
+  { id: 'fill-blank',    label: 'Fill in the Blank', desc: 'Complete sentences with the right word',         icon: '⊘', count: 8  },
+  { id: 'case-drill',    label: 'Case Drill',        desc: 'Practice German cases and declension',           icon: '⊛', count: 8  },
+  { id: 'translation',   label: 'Translation',       desc: 'Translate sentences using your vocabulary',      icon: '⇄', count: 6  },
+  { id: 'article-drill', label: 'Article Drill',     desc: 'Choose der / die / das for each noun',           icon: '⟁', count: 15, client: true },
 ]
 
 // ── Phase: Select mode ────────────────────────────────────────────────────────
@@ -184,6 +187,49 @@ export default function Practice() {
     setPhase('loading')
 
     const cfg = MODES.find(m => m.id === selectedMode)
+
+    // Article drill is client-side: pull nouns from vocabulary
+    if (selectedMode === 'article-drill') {
+      try {
+        const vocab = await api.getVocabulary()
+        const nouns = vocab.filter(r => {
+          const pos = r['Part of Speech'] || ''
+          return pos.toLowerCase().includes('noun') || detectGender(pos) !== null
+        })
+        if (nouns.length < 3) {
+          setError('Not enough nouns in your vocabulary for Article Drill. Add some nouns first.')
+          setPhase('select')
+          return
+        }
+        // Build questions — shuffle, take up to count
+        const shuffled = [...nouns].sort(() => Math.random() - 0.5).slice(0, cfg.count)
+        const qs = shuffled.map(row => ({
+          type:    'article-drill',
+          front:   stripArticle(row.Word || ''),
+          answer:  detectGender(row['Part of Speech'] || ''),
+          pos:     row['Part of Speech'] || '',
+          word:    row.Word || '',
+          meaning: row['Intended Meaning'] || row['Literal Meaning'] || '',
+        })).filter(q => q.answer) // only nouns we can detect gender for
+
+        if (qs.length < 3) {
+          setError('Not enough nouns with detectable gender. Make sure Part of Speech includes (m.), (f.), or (n.).')
+          setPhase('select')
+          return
+        }
+
+        setQuestions(qs)
+        setCurrentIdx(0)
+        setAnswers([])
+        setSessionStart(Date.now())
+        setPhase('session')
+      } catch (err) {
+        setError(err.message)
+        setPhase('select')
+      }
+      return
+    }
+
     try {
       const data = await api.generatePractice({ mode: selectedMode, count: cfg.count })
       setQuestions(data.questions)
@@ -195,6 +241,10 @@ export default function Practice() {
       setError(err.message)
       setPhase('select')
     }
+  }
+
+  function stripArticle(word) {
+    return word.replace(/^(der|die|das)\s+/i, '')
   }
 
   function handleAnswer(result) {

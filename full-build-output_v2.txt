@@ -46,3 +46,50 @@ Everything passes. Here's a summary of every change made:
 - **`ErrorBoundary.jsx`** — new class component catching render crashes, styled with design system, "Try Again" button; wraps every page in `App.jsx`
 - **`Toast.jsx`** — updated to use new color palette; toasts now appear bottom-right
 - **All pages** — replaced local `showToast` state with `useToast()` hook; added retry buttons on load errors; `TextAnalysis` now has character count + 5000-char warning; `Practice` shows link to `/vocabulary` when empty; `Grammar`/`Vocabulary`/`Phrases` all have error + retry states
+[main 044e1d1] Phase 7: Design System + Error Handling Retrofit [autonomous build]
+ 25 files changed, 1968 insertions(+), 880 deletions(-)
+ create mode 100755 build-phase2,sh
+ create mode 100644 build-phase2-log-20260331-232208.txt
+ create mode 100644 client/src/components/ErrorBoundary.jsx
+ create mode 100644 full-build-output_v2.txt
+To github.com:denzilbilson/german-learning-app.git
+   9127e15..044e1d1  main -> main
+[0;32m[23:38:52][0m Phase 7 committed and pushed.
+[0;32m[23:38:52][0m Phase 7 complete.
+[0;32m[23:38:52][0m ============================================
+[0;32m[23:38:52][0m PHASE 8: Bulk Import + German-Specific UX
+[0;32m[23:38:52][0m Model: sonnet | Budget cap: $18
+[0;32m[23:38:52][0m ============================================
+Everything checks out. Here's a summary of everything built:
+
+---
+
+## Feature A: Bulk Import (CSV / Notion Export)
+
+**Server (`server/routes/import.js`):**
+- `POST /api/import/csv` — multipart upload via multer (5 MB limit), auto-detects `,` / `\t` / `;` delimiter, fuzzy column mapping (25+ aliases in English and German), returns 10-row preview + full data
+- `POST /api/import/confirm` — deduplicates against existing entries by primary key, appends to markdown, returns `{ added, duplicatesSkipped, errors }`
+- Notion quirks handled: quoted fields via csv-parse, date normalization (US/EU/ISO/English month → YYYY-MM-DD), multi-select strings preserved
+
+**Client (`client/src/pages/Import.jsx`):** 5-step wizard
+1. Drag-and-drop upload zone (dashed border → accent-gold on hover/drag)
+2. Column mapping table with auto-filled dropdowns + 5-row mini DataTable preview
+3. Target selector — two cards (Vocabulary / Phrases), selected card gets accent-gold border
+4. Confirmation screen with row counts
+5. Success screen with accent-gold checkmark, added/skipped/error stat cards, "View Database" link
+
+Added "Import ↑" to the sidebar nav.
+
+---
+
+## Feature B: German UX Enhancements
+
+**`GenderBadge.jsx`** — colored pill parsing `Part of Speech`: der=blue, die=red, das=green, die(pl.)=purple. `GenderLegend` shows 4 colored dots in sidebar footer.
+
+**`SpeakButton.jsx`** — Web Speech API, `lang='de-DE'`, rate=0.85, German voice auto-selected. Speaker icon pulses gold while speaking. Placed on: vocabulary words, phrase table phrases, analysis translation lines, analysis vocabulary words, practice question cards (flashcard + quiz + fill-blank + case-drill).
+
+**`GermanKeyboard.jsx`** — `ä ö ü ß Ä Ö Ü` bar. Uses `mousedown` + native input setter to insert at cursor without stealing focus. Toggle visibility stored in `localStorage`. Appears in: Vocabulary add modal, Phrases add modal, Vocabulary page header, Phrases page header, TextAnalysis page.
+
+**Conjugation helper** — `POST /api/vocabulary/conjugate` calls Claude for Präsens/Präteritum/Perfekt/Konjunktiv II, caches JSON in `data/conjugations/`. Vocabulary table shows a `conj` button on verbs — clicking opens an inline modal with a full conjugation grid.
+
+**Article Drill** — 6th practice mode (client-side, no AI call). Loads nouns from vocabulary, strips article, shows 4 colored buttons (der/die/das/plural). Correct → button flashes its gender color + ✓; incorrect → button flashes red, correct answer highlights in its gender color. Auto-advances after 1.2s.

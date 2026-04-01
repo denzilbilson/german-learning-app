@@ -6,8 +6,10 @@ import Vocabulary   from './pages/Vocabulary.jsx'
 import Phrases      from './pages/Phrases.jsx'
 import Practice     from './pages/Practice.jsx'
 import Grammar      from './pages/Grammar.jsx'
+import Import       from './pages/Import.jsx'
 import { ToastProvider } from './components/Toast.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
+import { GenderLegend } from './components/GenderBadge.jsx'
 
 const NAV_ITEMS = [
   { to: '/',           label: 'Dashboard',  icon: '⊞' },
@@ -16,6 +18,7 @@ const NAV_ITEMS = [
   { to: '/phrases',    label: 'Phrases',    icon: '❝' },
   { to: '/practice',   label: 'Practice',   icon: '◈' },
   { to: '/grammar',    label: 'Grammar',    icon: '§'  },
+  { to: '/import',     label: 'Import',     icon: '↑'  },
 ]
 
 function SunIcon() {
@@ -114,16 +117,19 @@ function Sidebar({ theme, onToggleTheme, mobileOpen, onClose }) {
         </nav>
 
         {/* Footer */}
-        <div className="mt-auto px-2 pt-8 space-y-3">
-          <button
-            onClick={onToggleTheme}
-            className="flex items-center gap-2 text-xs text-secondary hover:text-primary font-sans"
-            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-          >
-            {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
-            {theme === 'dark' ? 'Light mode' : 'Dark mode'}
-          </button>
-          <p className="text-xs text-warm-700 font-sans">Powered by Claude</p>
+        <div className="mt-auto px-2 pt-8 space-y-4">
+          <GenderLegend />
+          <div className="border-t border-warm-800 pt-3 space-y-2">
+            <button
+              onClick={onToggleTheme}
+              className="flex items-center gap-2 text-xs text-secondary hover:text-primary font-sans"
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+              {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            </button>
+            <p className="text-xs text-warm-700 font-sans">Powered by Claude</p>
+          </div>
         </div>
       </aside>
     </>
@@ -158,6 +164,7 @@ function AnimatedRoutes() {
         <Route path="/phrases"    element={<ErrorBoundary><Phrases /></ErrorBoundary>} />
         <Route path="/practice"   element={<ErrorBoundary><Practice /></ErrorBoundary>} />
         <Route path="/grammar"    element={<ErrorBoundary><Grammar /></ErrorBoundary>} />
+        <Route path="/import"     element={<ErrorBoundary><Import /></ErrorBoundary>} />
         <Route path="*"           element={<Navigate to="/" replace />} />
       </Routes>
     </div>

@@ -3,6 +3,7 @@ import { api } from '../services/api.js'
 import { useToast } from '../components/Toast.jsx'
 import AnalysisReader from '../components/AnalysisReader.jsx'
 import AnkiExportModal from '../components/AnkiExportModal.jsx'
+import GermanKeyboard from '../components/GermanKeyboard.jsx'
 
 const MAX_CHARS = 5000
 
@@ -130,6 +131,8 @@ export default function TextAnalysis() {
                 Text exceeds {MAX_CHARS.toLocaleString()} characters. Consider analyzing a shorter passage for better results.
               </p>
             )}
+
+            <GermanKeyboard />
 
             <input
               type="text"

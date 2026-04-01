@@ -129,4 +129,27 @@ export const api = {
   getProgress:   ()           => req('GET',  '/progress'),
   logProgress:   (body)       => req('POST', '/progress', body),
   getDashboard:  ()           => req('GET',  '/dashboard'),
+
+  // ── Import ────────────────────────────────────────────────────
+  importCsv: async (file) => {
+    const form = new FormData()
+    form.append('file', file)
+    const { signal, clear } = makeAbortSignal(30_000)
+    let res
+    try {
+      res = await fetch('/api/import/csv', { method: 'POST', body: form, signal })
+    } catch (err) {
+      clear()
+      if (err.name === 'AbortError') throw new Error('Upload timed out')
+      throw new Error('Server not reachable — is the backend running on port 3001?')
+    }
+    clear()
+    const data = await res.json().catch(() => { throw new Error(`HTTP ${res.status}`) })
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
+    return data
+  },
+  importConfirm: (body)     => req('POST', '/import/confirm', body),
+
+  // ── Conjugation ───────────────────────────────────────────────
+  conjugateVerb: (verb)     => req('POST', '/vocabulary/conjugate', { verb }),
 }

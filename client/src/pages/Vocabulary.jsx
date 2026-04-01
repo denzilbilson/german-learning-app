@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import DataTable from '../components/DataTable.jsx'
 import AnkiExportModal from '../components/AnkiExportModal.jsx'
+import GenderBadge from '../components/GenderBadge.jsx'
+import SpeakButton from '../components/SpeakButton.jsx'
+import GermanKeyboard from '../components/GermanKeyboard.jsx'
 import { api } from '../services/api.js'
 import { useToast } from '../components/Toast.jsx'
 
@@ -21,7 +24,12 @@ function PosBadge({ val }) {
   if (!val) return null
   const key = val.toLowerCase().match(/^[a-z]+/)?.[0] || ''
   const cls = POS_COLORS[key] || 'bg-tertiary text-secondary border border-warm-700'
-  return <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${cls}`}>{val}</span>
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${cls}`}>{val}</span>
+      <GenderBadge pos={val} />
+    </div>
+  )
 }
 
 function LevelBadge({ val }) {
@@ -29,8 +37,110 @@ function LevelBadge({ val }) {
   return <span className="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-accent-gold/10 text-accent-gold">{val}</span>
 }
 
+function WordCell({ val, row }) {
+  const pos = row?.['Part of Speech'] || ''
+  const isVerb = pos.toLowerCase().includes('verb')
+  return (
+    <div className="flex items-center gap-2">
+      <span className="font-semibold text-primary">{val}</span>
+      <SpeakButton text={val} />
+      {isVerb && <ConjugateInline word={val} />}
+    </div>
+  )
+}
+
+// ── Conjugation panel ─────────────────────────────────────────────
+
+function ConjugateInline({ word }) {
+  const [open,   setOpen]   = useState(false)
+  const [data,   setData]   = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [err,    setErr]    = useState(null)
+
+  async function load() {
+    if (data) { setOpen(o => !o); return }
+    setLoading(true)
+    setErr(null)
+    try {
+      const res = await api.conjugateVerb(word)
+      setData(res)
+      setOpen(true)
+    } catch (e) {
+      setErr(e.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const TENSES = data ? Object.keys(data.tenses) : []
+  const PRONOUNS = ['ich', 'du', 'er/sie/es', 'wir', 'ihr', 'sie/Sie']
+
+  return (
+    <>
+      <button
+        onClick={(e) => { e.stopPropagation(); load() }}
+        disabled={loading}
+        className="text-[10px] px-1.5 py-0.5 bg-accent-green/10 text-accent-green border border-accent-green/20 rounded hover:bg-accent-green/20 disabled:opacity-50 font-sans"
+        title="Show verb conjugation"
+      >
+        {loading ? '…' : 'conj'}
+      </button>
+      {err && <span className="text-[10px] text-accent-red ml-1">{err}</span>}
+
+      {open && data && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-primary/70 backdrop-blur-sm"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="bg-secondary border border-warm-700 rounded-2xl w-full max-w-2xl mx-4 shadow-2xl overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b border-warm-800">
+              <div>
+                <h3 className="font-display text-lg text-primary">{data.infinitive}</h3>
+                <p className="text-xs text-secondary font-sans mt-0.5">
+                  Hilfsverb: <span className="text-accent-gold">{data.auxiliary}</span>
+                  {data.isReflexive && <span className="ml-2 text-accent-purple">(reflexive)</span>}
+                </p>
+              </div>
+              <button onClick={() => setOpen(false)} className="text-warm-600 hover:text-warm-300 text-lg">✕</button>
+            </div>
+
+            <div className="overflow-x-auto p-6">
+              <table className="w-full text-sm font-sans">
+                <thead>
+                  <tr>
+                    <th className="text-left text-warm-600 text-xs uppercase tracking-wider pb-3 pr-6">Pronoun</th>
+                    {TENSES.map(t => (
+                      <th key={t} className="text-left text-warm-500 text-xs uppercase tracking-wider pb-3 px-3">{t}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {PRONOUNS.map(pron => (
+                    <tr key={pron} className="border-t border-warm-800/50 hover:bg-tertiary/30">
+                      <td className="py-2 pr-6 text-secondary text-xs font-medium whitespace-nowrap">{pron}</td>
+                      {TENSES.map(t => (
+                        <td key={t} className="py-2 px-3 text-warm-300 whitespace-nowrap">
+                          {data.tenses[t]?.[pron] || '—'}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+// ── Column definitions ────────────────────────────────────────────
 const COLUMNS = [
-  { key: 'Word',             label: 'Word',    sortable: true,  editable: true,  textClass: 'font-semibold text-primary' },
+  { key: 'Word',             label: 'Word',    sortable: true,  editable: true,  render: (val, row) => <WordCell val={val} row={row} /> },
   { key: 'Literal Meaning',  label: 'Literal', sortable: false, editable: true,  textClass: 'text-secondary italic text-xs' },
   { key: 'Intended Meaning', label: 'Meaning', sortable: false, editable: true,  textClass: 'text-warm-300' },
   { key: 'Part of Speech',   label: 'POS',     sortable: true,  editable: true,  render: (val) => <PosBadge val={val} /> },
@@ -125,6 +235,8 @@ function AddModal({ onClose, onSave }) {
               className={`${inputCls} resize-none`} />
           </div>
 
+          <GermanKeyboard className="justify-end" />
+
           {err && <p className="text-accent-red text-sm">{err}</p>}
 
           <div className="flex justify-end gap-3 pt-1">
@@ -194,6 +306,7 @@ export default function Vocabulary() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <GermanKeyboard />
           <button
             onClick={() => setShowAnki(true)}
             disabled={rows.length === 0}

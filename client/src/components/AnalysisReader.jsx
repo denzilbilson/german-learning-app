@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import SpeakButton from './SpeakButton.jsx'
+import GenderBadge from './GenderBadge.jsx'
 
 // ── Badge helpers ─────────────────────────────────────────────────
 
@@ -63,8 +65,9 @@ function TranslationSection({ translations = [] }) {
             className={`grid grid-cols-2 divide-x divide-warm-800/60 border-b border-warm-800/40 last:border-0
               ${i % 2 === 0 ? 'bg-secondary/60' : 'bg-secondary/20'}`}
           >
-            <div className="px-5 py-3.5 text-primary text-sm leading-relaxed font-medium">
-              {t.german}
+            <div className="px-5 py-3.5 text-primary text-sm leading-relaxed font-medium flex items-center gap-2">
+              <span>{t.german}</span>
+              <SpeakButton text={t.german} />
             </div>
             <div className="px-5 py-3.5 text-secondary text-sm leading-relaxed italic">
               {t.english}
@@ -144,16 +147,22 @@ function VocabSection({ vocabulary = [], selectedVocab, onToggleVocab, onSelectA
                   />
                 </div>
                 <div className="px-4 py-3.5">
-                  <span className="text-primary font-semibold text-sm leading-snug">{v.word}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-primary font-semibold text-sm leading-snug">{v.word}</span>
+                    <SpeakButton text={v.word} />
+                  </div>
                 </div>
                 <div className="px-4 py-3.5 min-w-0">
                   <div className="text-secondary text-xs mb-0.5 truncate">{v.literalMeaning}</div>
                   <div className="text-warm-200 text-sm leading-snug">{v.intendedMeaning}</div>
                 </div>
                 <div className="px-4 py-3.5">
-                  <span className={`inline-block px-2 py-0.5 rounded text-xs border ${posBadgeClass(v.partOfSpeech)}`}>
-                    {v.partOfSpeech}
-                  </span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs border ${posBadgeClass(v.partOfSpeech)}`}>
+                      {v.partOfSpeech}
+                    </span>
+                    <GenderBadge pos={v.partOfSpeech} />
+                  </div>
                 </div>
                 <div className="px-4 py-3.5">
                   <span className={`inline-block px-2 py-0.5 rounded text-xs font-mono font-bold ${levelBadgeClass(v.level)}`}>
@@ -240,7 +249,10 @@ function PhrasesSection({ phrases = [], selectedPhrases, onTogglePhrase, onSelec
               style={{ accentColor: '#D4A843' }}
             />
             <div className="flex-1 min-w-0">
-              <div className="text-primary font-semibold text-base leading-snug">{p.phrase}</div>
+              <div className="flex items-center gap-2">
+                <div className="text-primary font-semibold text-base leading-snug">{p.phrase}</div>
+                <SpeakButton text={p.phrase} />
+              </div>
               <div className="text-secondary text-sm mt-1 leading-relaxed">{p.englishMeaning}</div>
             </div>
             <span className={`flex-shrink-0 mt-0.5 px-2 py-0.5 rounded text-xs font-mono font-bold ${levelBadgeClass(p.level)}`}>
