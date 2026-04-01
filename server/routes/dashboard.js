@@ -1,3 +1,12 @@
+/**
+ * Dashboard routes
+ *
+ * GET /api/dashboard — return aggregated statistics for the home page
+ *   Response includes:
+ *     totalVocab, totalPhrases, daysActive, addedThisWeek, addedThisMonth,
+ *     recentAnalyses (last 5), practiceStats (sessions, avgScore, lastSession),
+ *     levelDistribution (A1–C2 counts), wordsOverTime (cumulative chart data)
+ */
 import { Router } from 'express'
 import { readdir, readFile, stat } from 'fs/promises'
 import { resolve, join } from 'path'

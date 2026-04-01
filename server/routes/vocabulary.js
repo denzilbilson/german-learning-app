@@ -1,3 +1,12 @@
+/**
+ * Vocabulary routes
+ *
+ * GET    /api/vocabulary              — list all entries (query: ?level=, ?search=, ?since=)
+ * POST   /api/vocabulary              — add one or more entries
+ * PUT    /api/vocabulary/:index       — update entry at row index
+ * DELETE /api/vocabulary/:index       — delete entry at row index
+ * POST   /api/vocabulary/conjugate    — conjugate a verb via Claude (result cached to disk)
+ */
 import { Router }  from 'express'
 import { resolve }  from 'path'
 import { readFile, writeFile, mkdir } from 'fs/promises'

@@ -1,3 +1,22 @@
+/**
+ * GlobalSearch — Cmd+K full-app search modal.
+ *
+ * Props:
+ *   isOpen  {boolean}  — whether the modal is visible
+ *   onClose {() => void} — called when the user dismisses (Esc, backdrop click)
+ *
+ * Features:
+ *   - Input debounced 300 ms before calling GET /api/search
+ *   - Results grouped by type (vocabulary, phrases, grammar, analysis)
+ *   - Match highlighting in title and snippet using accent-gold colour
+ *   - Keyboard navigation: ArrowUp/ArrowDown to move, Enter to open, Esc to close
+ *   - Recent searches (up to 5) stored in localStorage under "gs_recent_searches"
+ *   - Navigates to the relevant page on result selection:
+ *       vocabulary → /vocabulary?highlight=<word>
+ *       phrases    → /phrases?highlight=<phrase>
+ *       grammar    → /grammar?highlight=<topic>
+ *       analysis   → /analyze
+ */
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../services/api.js'

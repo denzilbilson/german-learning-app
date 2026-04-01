@@ -13,13 +13,21 @@ function saveVisible(v) {
 }
 
 /**
- * GermanKeyboard — a small bar of special German characters.
+ * GermanKeyboard — on-screen bar for inserting German special characters.
  *
- * Clicking a character inserts it at the cursor position in the currently
- * focused <input> or <textarea>.
+ * Renders clickable buttons for: ä ö ü ß Ä Ö Ü
+ * Clicking a character inserts it at the cursor position in whichever
+ * <input> or <textarea> was most recently focused (tracked via a global
+ * `focusin` listener). The native value setter is used to trigger React's
+ * synthetic onChange, so controlled components update correctly.
  *
- * Usage: just render <GermanKeyboard /> near a text input.
- * The component handles focus tracking globally via document events.
+ * Props:
+ *   className {string} — additional CSS classes for the outer wrapper
+ *
+ * Visibility is toggled by a small button (shows "äöü ×" when visible,
+ * "äöü" when hidden) and persisted to localStorage under "german_keyboard_visible".
+ *
+ * Usage: render <GermanKeyboard /> anywhere near a text input — no wiring needed.
  */
 export default function GermanKeyboard({ className = '' }) {
   const [visible, setVisible] = useState(loadVisible)

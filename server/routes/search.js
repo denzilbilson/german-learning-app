@@ -1,3 +1,13 @@
+/**
+ * Global search routes
+ *
+ * GET /api/search?q=&type=all|vocabulary|phrases|grammar|analysis
+ *   Searches across all content types in parallel.
+ *   Scoring: exact match=3, starts-with=2, contains=1.
+ *   German character normalisation: ä→ae, ö→oe, ü→ue, ß→ss.
+ *   Returns up to 20 results per type, sorted by relevance score.
+ *   Response: { query, total, results: { vocabulary, phrases, grammar, analysis } }
+ */
 import { Router } from 'express'
 import { readFile, readdir } from 'fs/promises'
 import { resolve, join } from 'path'

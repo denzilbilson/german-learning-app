@@ -1,3 +1,10 @@
+/**
+ * Grammar routes
+ *
+ * GET /api/grammar — parse data/grammar/rules.md and return all grammar rules
+ *   Response: array of { topic, explanation, examples, level }
+ *   Keys are normalised to camelCase for the frontend.
+ */
 import { Router } from 'express'
 import { readFile } from 'fs/promises'
 import { resolve } from 'path'

@@ -1,3 +1,11 @@
+/**
+ * Anki export routes
+ *
+ * POST /api/anki/export — generate and download an Anki-compatible TSV file
+ *   Body: { vocabulary: object[], phrases: object[], enrich: boolean }
+ *   When enrich=true, calls Claude to add German definitions to each card.
+ *   Returns: TSV file attachment (Content-Disposition: attachment)
+ */
 import { Router } from 'express'
 import { generateTSV } from '../services/anki-export.js'
 import { callClaude } from '../services/claude-service.js'

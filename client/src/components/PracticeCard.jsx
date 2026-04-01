@@ -1,3 +1,24 @@
+/**
+ * PracticeCard — renders a single practice question for any supported mode.
+ *
+ * Props:
+ *   question   {object}  — question object from POST /api/practice/generate.
+ *                          Shape varies by mode (see docs/PROMPTS.md for schemas).
+ *                          Must include a `type` field matching one of the modes below.
+ *   onComplete {({ correct: boolean, word: string }) => void}
+ *              — called when the learner answers (or self-marks on flashcard/article-drill)
+ *
+ * Supported modes and their UX:
+ *   flashcard    — flip card (tap front → reveal back), self-mark "Got it" / "Missed it"
+ *   article-drill — four gender buttons (der/die/das/die pl.); auto-advances after 1.2 s
+ *   quiz         — multiple-choice buttons; evaluated client-side, no Claude call
+ *   fill-blank   — text input; answer checked via POST /api/practice/check
+ *   case-drill   — text input; answer checked via Claude
+ *   translation  — textarea; answer checked via Claude
+ *
+ * For Claude-checked modes, the component shows a loading state while waiting
+ * and surfaces error messages inside the feedback block on failure.
+ */
 import { useState } from 'react'
 import { api } from '../services/api.js'
 import SpeakButton from './SpeakButton.jsx'

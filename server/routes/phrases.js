@@ -1,3 +1,11 @@
+/**
+ * Phrases routes
+ *
+ * GET    /api/phrases          — list all phrase entries (query: ?level=, ?search=, ?since=)
+ * POST   /api/phrases          — add one or more phrases
+ * PUT    /api/phrases/:index   — update phrase at row index
+ * DELETE /api/phrases/:index   — delete phrase at row index
+ */
 import { Router } from 'express'
 import { resolve } from 'path'
 import * as store from '../services/markdown-store.js'

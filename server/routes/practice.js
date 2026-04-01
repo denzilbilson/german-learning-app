@@ -1,3 +1,14 @@
+/**
+ * Practice routes
+ *
+ * POST /api/practice/generate — generate practice questions for a given mode
+ *   Body: { mode: 'flashcard'|'quiz'|'fill-blank'|'case-drill'|'translation', count?, level? }
+ *   Flashcard mode: no Claude call — shuffles vocabulary and returns directly.
+ *   Other modes: calls Claude with buildGeneratePrompt(mode, vocabulary, count).
+ *
+ * POST /api/practice/check    — evaluate a student's free-text answer via Claude
+ *   Body: { question, userAnswer, correctAnswer, mode }
+ */
 import { Router } from 'express'
 import { resolve } from 'path'
 import { DATA_DIR, getAll } from '../services/markdown-store.js'

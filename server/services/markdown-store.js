@@ -119,6 +119,16 @@ function validateEntry(headers, entry) {
 
 // ── Public CRUD API ───────────────────────────────────────────────
 
+/**
+ * Read all rows from a Markdown table file, with optional filtering.
+ *
+ * @param {string} filepath - Absolute path to the .md file
+ * @param {{ level?: string, search?: string, since?: string }} [query={}]
+ *   - level:  filter rows where the `Level` column equals this value (e.g. "B1")
+ *   - search: case-insensitive substring match across all column values
+ *   - since:  ISO date string; only rows with `Date Added` >= this date are returned
+ * @returns {Promise<object[]>} Array of row objects keyed by column header
+ */
 export async function getAll(filepath, query = {}) {
   const { rows } = await readMd(filepath)
   let out = rows
@@ -141,12 +151,30 @@ export async function getAll(filepath, query = {}) {
   return out
 }
 
+/**
+ * Get a single row by its 0-based row index.
+ *
+ * @param {string} filepath - Absolute path to the .md file
+ * @param {number} idx      - 0-based row index
+ * @returns {Promise<object|null>} Row object, or null if index is out of range
+ */
 export async function getByIndex(filepath, idx) {
   const { rows } = await readMd(filepath)
   if (idx < 0 || idx >= rows.length) return null
   return rows[idx]
 }
 
+/**
+ * Append one or more rows to a Markdown table file.
+ * Missing `Date Added` values are auto-filled with today's date.
+ * Unknown keys in an entry are silently ignored.
+ *
+ * @param {string}          filepath - Absolute path to the .md file
+ * @param {object|object[]} entries  - Row object or array of row objects. Keys must
+ *                                     match the column headers of the target file.
+ * @returns {Promise<object[]>} The newly appended row objects
+ * @throws {Error} If a field value is not a string or number
+ */
 export async function add(filepath, entries) {
   const { preamble, headers, rows } = await readMd(filepath)
   const list = Array.isArray(entries) ? entries : [entries]
@@ -163,6 +191,15 @@ export async function add(filepath, entries) {
   return newRows
 }
 
+/**
+ * Update a row in a Markdown table file by merging `data` into the existing row.
+ *
+ * @param {string} filepath - Absolute path to the .md file
+ * @param {number} idx      - 0-based row index to update
+ * @param {object} data     - Partial row object; only provided keys are overwritten
+ * @returns {Promise<object>} The updated row object
+ * @throws {Error} If `idx` is out of range
+ */
 export async function update(filepath, idx, data) {
   const { preamble, headers, rows } = await readMd(filepath)
   if (idx < 0 || idx >= rows.length) {
@@ -174,6 +211,14 @@ export async function update(filepath, idx, data) {
   return rows[idx]
 }
 
+/**
+ * Delete a row from a Markdown table file by its 0-based index.
+ *
+ * @param {string} filepath - Absolute path to the .md file
+ * @param {number} idx      - 0-based row index to remove
+ * @returns {Promise<object>} The deleted row object
+ * @throws {Error} If `idx` is out of range
+ */
 export async function remove(filepath, idx) {
   const { preamble, headers, rows } = await readMd(filepath)
   if (idx < 0 || idx >= rows.length) {

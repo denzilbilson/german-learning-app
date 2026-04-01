@@ -1,3 +1,16 @@
+/**
+ * Practice session routes
+ *
+ * GET    /api/sessions              — paginated list of sessions (query: ?page=1&limit=20)
+ *   Response: { sessions: [...], pagination: { page, limit, total, pages } }
+ *
+ * GET    /api/sessions/weak-words   — aggregate words with errors across all sessions
+ *   Response: [{ word, timesSeen, timesWrong, errorRate, lastMissedDate }] sorted by timesWrong
+ *
+ * GET    /api/sessions/:id          — full session detail including all question/answer pairs
+ *
+ * DELETE /api/sessions/:id          — permanently delete a session JSON file
+ */
 import { Router } from 'express'
 import { readFile, writeFile, readdir, unlink, mkdir } from 'fs/promises'
 import { resolve, join } from 'path'

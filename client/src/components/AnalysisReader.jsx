@@ -1,3 +1,24 @@
+/**
+ * AnalysisReader — displays a Claude text analysis result with selectable items.
+ *
+ * Renders four sections from the analysis object:
+ *   1. Translations     — side-by-side German/English table with audio buttons
+ *   2. Vocabulary       — checkboxed table with word, literal/intended meaning, POS badge, level
+ *                         Rows expand to show case examples
+ *   3. Phrases & Idioms — checkboxed card list
+ *   4. Grammar Notes    — collapsible accordion (first item open by default)
+ *
+ * Props:
+ *   analysis           {object}      — full analysis object from POST /api/analyze
+ *   selectedVocab      {Set<number>} — indices of selected vocabulary items
+ *   selectedPhrases    {Set<number>} — indices of selected phrase items
+ *   onToggleVocab      {(i) => void} — toggle a vocabulary index in/out of selection
+ *   onTogglePhrase     {(i) => void} — toggle a phrase index
+ *   onSelectAllVocab   {() => void}  — select all vocabulary items
+ *   onDeselectAllVocab {() => void}  — deselect all vocabulary items
+ *   onSelectAllPhrases {() => void}  — select all phrases
+ *   onDeselectAllPhrases {() => void}
+ */
 import { useState } from 'react'
 import SpeakButton from './SpeakButton.jsx'
 import GenderBadge from './GenderBadge.jsx'

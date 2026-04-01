@@ -1,3 +1,13 @@
+/**
+ * Text analysis routes
+ *
+ * POST /api/analyze            — submit German text for AI analysis; saves JSON to data/analysis/
+ * POST /api/analyze/add        — add selected vocabulary/phrases from an analysis to the databases
+ * GET  /api/analysis           — list saved analysis files (metadata: filename, source, counts, preview)
+ * GET  /api/analysis/:filename — retrieve a specific saved analysis JSON
+ *
+ * Note: this router is mounted at BOTH /api/analyze and /api/analysis in index.js.
+ */
 import express from 'express'
 import { readFileSync, writeFileSync, readdirSync, statSync, mkdirSync } from 'fs'
 import { join, dirname, resolve } from 'path'

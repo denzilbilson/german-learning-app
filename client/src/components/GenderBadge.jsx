@@ -1,11 +1,23 @@
 /**
- * GenderBadge — renders a colored pill badge for German noun gender.
+ * GenderBadge — coloured pill badge showing German noun gender.
  *
- * Parses the Part of Speech string and detects:
- *   masculine  → der  → accent-blue   (#4A90D9)
- *   feminine   → die  → accent-red    (#D94A6B, custom)
- *   neuter     → das  → accent-green  (#4AD97A)
- *   plural     → pl.  → accent-purple (#9B59B6)
+ * Parses the Part of Speech string and detects gender from:
+ *   - Explicit markers: (m.), (f.), (n.), maskulin, feminin, neutral, pl.
+ *   - Article prefix in the word itself: "der Tisch", "die Frau", "das Kind"
+ *
+ * Gender → colour mapping:
+ *   masculine → der       → accent-blue   (#4A90D9)
+ *   feminine  → die       → accent-red    (#D94A6B)
+ *   neuter    → das       → accent-green  (#4AD97A)
+ *   plural    → die (pl.) → accent-purple (#9B59B6)
+ *
+ * Exports:
+ *   default GenderBadge({ pos: string, className?: string })
+ *     — renders the badge, or null if gender cannot be detected
+ *   detectGender(posString: string) → 'masculine'|'feminine'|'neuter'|'plural'|null
+ *     — exported helper for use in other components
+ *   GenderLegend()
+ *     — compact legend showing all four genders; used in the sidebar footer
  */
 
 const GENDERS = {

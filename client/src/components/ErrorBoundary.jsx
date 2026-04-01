@@ -1,3 +1,20 @@
+/**
+ * ErrorBoundary — React class-based error boundary.
+ *
+ * Catches JavaScript errors in any child component tree during rendering,
+ * lifecycle methods, and constructors. On error, replaces the crashed subtree
+ * with a styled error card showing the error message and a "Try Again" button
+ * that resets state (allowing React to retry rendering the children).
+ *
+ * Errors are also logged to the console via componentDidCatch.
+ *
+ * Usage:
+ *   <ErrorBoundary>
+ *     <SomePage />
+ *   </ErrorBoundary>
+ *
+ * Note: does NOT catch errors in event handlers or async code (use try/catch there).
+ */
 import { Component } from 'react'
 
 export default class ErrorBoundary extends Component {

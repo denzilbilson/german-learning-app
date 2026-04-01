@@ -1,3 +1,16 @@
+/**
+ * CSV/TSV import routes
+ *
+ * POST /api/import/csv     — upload a CSV or TSV file and get a column-mapping preview
+ *   Multipart/form-data, field name: "file", max 5 MB, accepts .csv/.tsv/.txt
+ *   Auto-detects delimiter (tab > comma > semicolon)
+ *   Response: { headers, vocabMapping, phraseMapping, unmapped, totalRows, preview, data }
+ *
+ * POST /api/import/confirm — commit the mapped rows to vocabulary or phrases
+ *   Body: { data: object[], mapping: { raw, schema }[], target: 'vocabulary'|'phrases' }
+ *   Deduplicates by primary key (Word / Phrase), normalises dates, fills default Level.
+ *   Response: { added, duplicatesSkipped, errors, errorDetails }
+ */
 import { Router }  from 'express'
 import multer       from 'multer'
 import { parse }    from 'csv-parse/sync'

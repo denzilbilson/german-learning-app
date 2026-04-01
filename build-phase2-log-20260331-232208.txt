@@ -133,3 +133,33 @@ Everything looks good. Here's a summary of what was built:
 - **Weak Words tab**: sortable table (word, times seen, times wrong, error rate color-coded, last missed), links to vocabulary entries, "Practice Weak Words" button
 
 **`client/src/pages/Practice.jsx`** (updated) — `questionStartRef` tracks start time per question; `handleAnswer` enriches each result with `timeMs`, `questionText`, `correctAnswer`; full `questions` array and `weakWords` are sent to `logProgress`
+[0;32m[00:14:43][0m Phase 9 committed and pushed.
+[0;32m[00:14:43][0m Phase 9 complete.
+
+[0;32m[00:14:43][0m ============================================
+[0;32m[00:14:43][0m PHASE 10: Developer Documentation
+[0;32m[00:14:43][0m Model: sonnet | Budget cap: $12
+[0;32m[00:14:43][0m ============================================
+Everything is done. Here's a summary of what was created and modified:
+
+---
+
+**New files created:**
+
+- **`README.md`** — full rewrite: description, tech stack, quick start (clone → install → configure → run), complete project tree, feature table, full API reference (all 20 routes), environment variables, data layer explanation, troubleshooting, MIT license
+
+- **`docs/ARCHITECTURE.md`** — ASCII system diagram (browser ↔ Express ↔ disk ↔ Claude API), detailed data-flow walkthroughs for text analysis, practice sessions, Anki export, CSV import, and global search, error-handling strategy, design system (colour tokens, typography, component patterns)
+
+- **`docs/PROMPTS.md`** — every prompt template documented with purpose, input shape, output shape (with JSON examples), and key guidelines/rules — covers all 5 prompts: analyze-text, generate-practice (all 4 modes), check-answer, conjugate-verb, enrich-anki
+
+- **`docs/CONTRIBUTING.md`** — dev setup, code style rules, step-by-step guides for adding a new page, route, and practice mode, how markdown storage works, manual testing checklist, data directory notes
+
+---
+
+**Files updated with JSDoc/comments:**
+
+- **`server/services/markdown-store.js`** — JSDoc on all 5 exported functions (`getAll`, `getByIndex`, `add`, `update`, `remove`) with `@param` and `@returns`
+- **`server/services/claude-service.js`** — added file-level module comment
+- **`server/services/anki-export.js`** — expanded file header and full JSDoc on `generateTSV` including card format description
+- **All 11 route files** — header comment listing every endpoint with method, path, and description
+- **9 component files** — full doc comments on `DataTable`, `AnalysisReader`, `PracticeCard`, `GlobalSearch`, `GenderBadge`, `SpeakButton`, `GermanKeyboard`, `ErrorBoundary`, `Toast`

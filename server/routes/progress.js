@@ -1,3 +1,14 @@
+/**
+ * Progress routes
+ *
+ * GET  /api/progress — return the progress log as an array of row objects
+ *   (parsed from data/progress/log.md)
+ *
+ * POST /api/progress — log a completed practice session
+ *   Body: { mode, score, total, duration?, notes?, durationMs?, questions?, weakWords? }
+ *   Writes a full session JSON to data/progress/sessions/{id}.json
+ *   and appends a summary row to data/progress/log.md.
+ */
 import { Router } from 'express'
 import { resolve, join } from 'path'
 import { readFile, writeFile, mkdir } from 'fs/promises'

@@ -1,3 +1,10 @@
+/**
+ * Claude API wrapper.
+ *
+ * Provides a single `callClaude` function that handles authentication,
+ * request formatting, JSON parsing, and retry logic (rate limits + malformed JSON).
+ * All AI calls in this application go through this module.
+ */
 import Anthropic from '@anthropic-ai/sdk'
 
 const MODEL   = 'claude-sonnet-4-20250514'

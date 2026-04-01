@@ -1,3 +1,27 @@
+/**
+ * DataTable — a sortable, filterable, inline-editable Markdown-backed data table.
+ *
+ * Props:
+ *   columns   {Array}   — column definitions:
+ *     { key: string, label: string, sortable?: boolean, editable?: boolean,
+ *       render?: (value, row) => ReactNode, options?: string[], className?: string, textClass?: string }
+ *   rows      {object[]} — data rows (keys match column `key` values)
+ *   onUpdate  {(rowIndex: number, patch: object) => void} — called when an inline edit is committed
+ *   onDelete  {(rowIndex: number) => void}                — called after delete confirmation
+ *   expandKey {string?}  — if set, rows with a value at this key get an expand toggle
+ *                          that shows the cell content split on "<br>" as a list
+ *   levelKey  {string}   — column key used for the CEFR level filter pills (default: "Level")
+ *   loading   {boolean}  — shows a pulsing placeholder while true
+ *
+ * Features:
+ *   - Client-side search across all column values
+ *   - CEFR level filter pills (A1-C2), shown only when any row has the levelKey column
+ *   - Click column header to sort ascending/descending
+ *   - Click an editable cell to open an inline input (or <select> if options provided)
+ *   - Enter to commit, Escape to cancel
+ *   - Hover row to reveal delete button; requires a second click to confirm
+ *   - Expandable row detail for the expandKey column (splits on "<br>")
+ */
 import { useState, useMemo, useRef, useEffect, Fragment } from 'react'
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']

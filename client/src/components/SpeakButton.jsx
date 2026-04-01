@@ -21,12 +21,22 @@ function SpeakerIcon({ pulsing }) {
 }
 
 /**
- * SpeakButton — uses Web Speech API to speak German text.
+ * SpeakButton — German pronunciation button using the Web Speech API.
+ *
+ * Renders a small speaker icon that speaks the provided text in German
+ * when clicked. The icon pulses while speech is active; clicking again
+ * cancels the current utterance.
  *
  * Props:
- *   text     {string}  — text to speak
- *   rate     {number}  — speech rate, default 0.85
- *   className {string} — extra class names
+ *   text      {string}  — the German text to pronounce (required)
+ *   rate      {number}  — speech rate multiplier (default: 0.85 — slightly slower for learners)
+ *   className {string}  — additional CSS classes for the button element
+ *
+ * Behaviour:
+ *   - Uses the first `de-DE` voice found in `speechSynthesis.getVoices()`
+ *   - Falls back to the browser default if no German voice is installed
+ *   - Returns null (renders nothing) if `text` is falsy
+ *   - No-ops silently if `window.speechSynthesis` is not available
  */
 export default function SpeakButton({ text, rate = 0.85, className = '' }) {
   const [speaking, setSpeaking] = useState(false)

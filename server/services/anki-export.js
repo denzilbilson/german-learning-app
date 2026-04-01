@@ -1,10 +1,17 @@
 /**
+ * Anki TSV export service.
+ *
  * Generates Anki-compatible TSV from vocabulary and/or phrase entries.
  * Handles both Title Case keys (from markdown store) and camelCase keys
- * (from Claude analysis responses).
+ * (from Claude analysis responses) via the `get()` helper.
  *
- * TSV format: Front  Back  Tags
- * HTML is allowed in Back field.
+ * TSV format (3 columns):
+ *   Front — German word or phrase
+ *   Back  — HTML-formatted definition block
+ *   Tags  — CEFR level scoped tag, e.g. "B1::vocabulary"
+ *
+ * The file header lines (#separator:tab, #html:true) tell Anki to expect
+ * tab-separated values and to render HTML in the Back field.
  */
 
 function get(entry, titleKey, camelKey) {
@@ -67,9 +74,20 @@ function phraseCard(entry) {
 }
 
 /**
- * @param {object[]} vocabEntries
- * @param {object[]} phraseEntries
- * @returns {string} TSV content ready for Anki import
+ * Generate an Anki-compatible TSV string from vocabulary and phrase entries.
+ *
+ * Each entry may use either Title Case keys (from markdown-store) or camelCase
+ * keys (from Claude analysis output) — both are supported.
+ *
+ * Vocabulary card back format:
+ *   Literal: <literal><br>Meaning: <meaning><br><b>POS</b><br>examples[<br><i>German def</i>]
+ *
+ * Phrase card back format:
+ *   <english meaning><br><i>Source: …</i>[<br><i>German def</i>]
+ *
+ * @param {object[]} [vocabEntries=[]]  - Vocabulary rows (Word / word key required)
+ * @param {object[]} [phraseEntries=[]] - Phrase rows (Phrase / phrase key required)
+ * @returns {string} Complete TSV file content including header directives
  */
 export function generateTSV(vocabEntries = [], phraseEntries = []) {
   const lines = [

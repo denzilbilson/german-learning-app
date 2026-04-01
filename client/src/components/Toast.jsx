@@ -1,3 +1,28 @@
+/**
+ * Toast notification system.
+ *
+ * Provides a React context + hook for triggering transient notifications.
+ *
+ * Exports:
+ *   ToastProvider — wrap the app (or a subtree) with this to enable toasts
+ *   useToast()    — returns the `toast` function from within any child component
+ *
+ * Usage:
+ *   const toast = useToast()
+ *   toast('Message')                    // info toast, 4 s
+ *   toast.success('Saved!')             // green, 4 s
+ *   toast.error('Something failed', 6000) // red, 6 s
+ *   toast.warning('Check your input')   // gold
+ *   toast.info('FYI…')                  // neutral
+ *
+ * Types: 'success' | 'error' | 'info' | 'warning'
+ *
+ * Behaviour:
+ *   - Toasts appear bottom-right, z-100, stacked vertically
+ *   - Max 5 visible at once (older toasts are removed to make room)
+ *   - Auto-dismiss after `duration` ms (default 4000)
+ *   - Click any toast to dismiss it immediately
+ */
 import { createContext, useContext, useState, useCallback } from 'react'
 
 const ToastContext = createContext(null)
