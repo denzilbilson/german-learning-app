@@ -128,3 +128,32 @@ Phase 3 is complete. Here's a summary of everything built:
 
 **`server/index.js`** — added `import analyzeRouter` and two mount points: `/api/analyze` (POST routes) and `/api/analysis` (GET routes)
 [0;32m[22:07:09][0m Committing Phase 3: Text Analysis Pipeline
+[0;32m[22:07:10][0m Phase 3 committed and pushed.
+[0;32m[22:07:10][0m Phase 3 complete.
+
+[0;32m[22:07:10][0m ============================================
+[0;32m[22:07:10][0m STARTING PHASE 4: Anki Export
+[0;32m[22:07:10][0m Budget limit: $20
+[0;32m[22:07:10][0m ============================================
+All modules load cleanly. Phase 4 is complete. Here's a summary of everything built:
+
+---
+
+**New files created:**
+
+- `server/services/anki-export.js` — TSV generator. Handles both Title Case keys (from markdown store) and camelCase keys (from Claude analysis). Produces Anki-compatible output with `#html:true` header. Vocabulary cards include literal meaning, intended meaning, POS (bolded), case examples, and optional German definition. Phrase cards include English meaning, source, and optional German definition. CEFR level becomes the Anki tag (e.g. `B1::vocabulary`).
+
+- `server/prompts/enrich-anki.js` — System prompt + message builder for Claude to generate monolingual German definitions at B1–B2 level, returned as a JSON array.
+
+- `server/routes/anki.js` — `POST /api/anki/export`. Accepts `{ vocabulary, phrases, enrich }`. If `enrich: true`, calls Claude once for all terms in batch, attaches definitions to entries, then falls back gracefully if enrichment fails. Returns `Content-Disposition: attachment` TSV file.
+
+- `client/src/components/AnkiExportModal.jsx` — Shared modal with: vocabulary/phrases toggle (when both present), level filter pills, AI enrichment toggle, card count preview, and download button. Fires `onSuccess` after download so pages can show a toast, vs `onClose` for cancel.
+
+**Modified files:**
+
+- `server/index.js` — Registered `ankiRouter` on `/api/anki`
+- `client/src/services/api.js` — Added `download()` helper for blob responses; `exportAnki` now returns a `Blob`
+- `client/src/pages/Vocabulary.jsx` — "Export to Anki" button in header, opens `AnkiExportModal` with all vocab rows
+- `client/src/pages/Phrases.jsx` — Same pattern for phrases
+- `client/src/pages/TextAnalysis.jsx` — "Export to Anki" button in sticky action bar, passes `analysis.vocabulary` + `analysis.phrases` to the modal
+[0;32m[22:13:53][0m Committing Phase 4: Anki Export

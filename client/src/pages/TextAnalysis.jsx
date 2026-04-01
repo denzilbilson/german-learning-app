@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { api } from '../services/api.js'
 import AnalysisReader from '../components/AnalysisReader.jsx'
+import AnkiExportModal from '../components/AnkiExportModal.jsx'
 
 export default function TextAnalysis() {
   const [phase, setPhase]               = useState('idle')   // idle | loading | done
@@ -11,6 +12,7 @@ export default function TextAnalysis() {
   const [selectedPhrases, setSelectedPhrases] = useState(new Set())
   const [toast, setToast]               = useState(null)
   const [addLoading, setAddLoading]     = useState(false)
+  const [showAnki,  setShowAnki]        = useState(false)
 
   // ── Helpers ───────────────────────────────────────────────────────
 
@@ -208,6 +210,19 @@ export default function TextAnalysis() {
           </button>
 
           <button
+            onClick={() => setShowAnki(true)}
+            disabled={addLoading || (vocabCount === 0 && phraseCount === 0)}
+            className="px-4 py-2 bg-stone-800 border border-stone-700 text-stone-300 rounded-lg text-sm font-semibold
+              hover:bg-stone-700 hover:border-stone-600 transition-colors
+              disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path d="M8 2v8M5 7l3 3 3-3M2 11v1a2 2 0 002 2h8a2 2 0 002-2v-1" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Export to Anki
+          </button>
+
+          <button
             onClick={handleAddAll}
             disabled={addLoading}
             className="px-5 py-2 bg-yellow-400 text-stone-900 rounded-lg text-sm font-semibold
@@ -273,6 +288,16 @@ export default function TextAnalysis() {
         >
           {toast.msg}
         </div>
+      )}
+
+      {/* ── Anki export modal ─────────────────────────────────────── */}
+      {showAnki && (
+        <AnkiExportModal
+          vocabRows={analysis.vocabulary || []}
+          phraseRows={analysis.phrases || []}
+          onClose={() => setShowAnki(false)}
+          onSuccess={() => { setShowAnki(false); showToast('success', 'Anki deck downloaded') }}
+        />
       )}
     </div>
   )

@@ -4,6 +4,7 @@ import cors from 'cors'
 import vocabularyRouter from './routes/vocabulary.js'
 import phrasesRouter    from './routes/phrases.js'
 import analyzeRouter    from './routes/analyze.js'
+import ankiRouter       from './routes/anki.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -26,12 +27,13 @@ app.use('/api/analyze',  analyzeRouter)
 // GET /api/analysis, GET /api/analysis/:filename
 app.use('/api/analysis', analyzeRouter)
 
+// ── Phase 4 routes ────────────────────────────────────────────────
+app.use('/api/anki', ankiRouter)
+
 // ── Stub routes (wired in later phases) ──────────────────────────
-// import ankiRouter      from './routes/anki.js'
 // import practiceRouter  from './routes/practice.js'
 // import progressRouter  from './routes/progress.js'
 // import dashboardRouter from './routes/dashboard.js'
-// app.use('/api/anki',      ankiRouter)
 // app.use('/api/practice',  practiceRouter)
 // app.use('/api/progress',  progressRouter)
 // app.use('/api/dashboard', dashboardRouter)

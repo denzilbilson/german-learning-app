@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import DataTable from '../components/DataTable.jsx'
+import AnkiExportModal from '../components/AnkiExportModal.jsx'
 import { api } from '../services/api.js'
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
@@ -141,10 +142,11 @@ function AddModal({ onClose, onSave }) {
 }
 
 export default function Vocabulary() {
-  const [rows, setRows]         = useState([])
-  const [loading, setLoading]   = useState(true)
+  const [rows, setRows]           = useState([])
+  const [loading, setLoading]     = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const [toast, setToast]       = useState(null)
+  const [showAnki,  setShowAnki]  = useState(false)
+  const [toast, setToast]         = useState(null)
 
   function showToast(msg, type = 'success') {
     setToast({ msg, type })
@@ -201,13 +203,25 @@ export default function Vocabulary() {
             {loading ? 'Loading…' : `${rows.length} word${rows.length !== 1 ? 's' : ''} saved`}
           </p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="px-5 py-2.5 bg-yellow-400 text-stone-900 rounded-xl text-sm font-semibold hover:bg-yellow-300 transition-colors flex items-center gap-2 shrink-0"
-        >
-          <span className="text-base leading-none font-bold">+</span>
-          Add Word
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowAnki(true)}
+            disabled={rows.length === 0}
+            className="px-4 py-2.5 bg-stone-800 border border-stone-700 text-stone-300 rounded-xl text-sm font-semibold hover:bg-stone-700 hover:border-stone-600 transition-colors flex items-center gap-1.5 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path d="M8 2v8M5 7l3 3 3-3M2 11v1a2 2 0 002 2h8a2 2 0 002-2v-1" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Export to Anki
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="px-5 py-2.5 bg-yellow-400 text-stone-900 rounded-xl text-sm font-semibold hover:bg-yellow-300 transition-colors flex items-center gap-2 shrink-0"
+          >
+            <span className="text-base leading-none font-bold">+</span>
+            Add Word
+          </button>
+        </div>
       </div>
 
       <DataTable
@@ -221,6 +235,13 @@ export default function Vocabulary() {
       />
 
       {showModal && <AddModal onClose={() => setShowModal(false)} onSave={handleAdd} />}
+      {showAnki  && (
+        <AnkiExportModal
+          vocabRows={rows}
+          onClose={() => setShowAnki(false)}
+          onSuccess={() => { setShowAnki(false); showToast('Anki deck downloaded') }}
+        />
+      )}
     </div>
   )
 }

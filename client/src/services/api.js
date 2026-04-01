@@ -15,6 +15,22 @@ async function req(method, path, body) {
   return res.json()
 }
 
+// For file-download endpoints that return binary/text blobs instead of JSON
+async function download(method, path, body) {
+  const opts = { method, headers: {} }
+  if (body !== undefined) {
+    opts.headers['Content-Type'] = 'application/json'
+    opts.body = JSON.stringify(body)
+  }
+  const res = await fetch(BASE + path, opts)
+  if (!res.ok) {
+    let msg
+    try { msg = (await res.json()).error } catch { msg = await res.text() }
+    throw new Error(msg || `HTTP ${res.status}`)
+  }
+  return res.blob()
+}
+
 function qs(params) {
   if (!params) return ''
   const clean = Object.fromEntries(
@@ -44,7 +60,7 @@ export const api = {
   getAnalysis:   (name)       => req('GET',  `/analysis/${name}`),
 
   // ── Anki (Phase 4) ────────────────────────────────────────────
-  exportAnki:    (body)       => req('POST', '/anki/export', body),
+  exportAnki:    (body)       => download('POST', '/anki/export', body),
 
   // ── Practice (Phase 5) ───────────────────────────────────────
   generatePractice: (body)   => req('POST', '/practice/generate', body),
