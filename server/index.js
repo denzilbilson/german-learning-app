@@ -5,6 +5,8 @@ import vocabularyRouter from './routes/vocabulary.js'
 import phrasesRouter    from './routes/phrases.js'
 import analyzeRouter    from './routes/analyze.js'
 import ankiRouter       from './routes/anki.js'
+import practiceRouter   from './routes/practice.js'
+import progressRouter   from './routes/progress.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -30,13 +32,9 @@ app.use('/api/analysis', analyzeRouter)
 // ── Phase 4 routes ────────────────────────────────────────────────
 app.use('/api/anki', ankiRouter)
 
-// ── Stub routes (wired in later phases) ──────────────────────────
-// import practiceRouter  from './routes/practice.js'
-// import progressRouter  from './routes/progress.js'
-// import dashboardRouter from './routes/dashboard.js'
-// app.use('/api/practice',  practiceRouter)
-// app.use('/api/progress',  progressRouter)
-// app.use('/api/dashboard', dashboardRouter)
+// ── Phase 5 routes ────────────────────────────────────────────────
+app.use('/api/practice',  practiceRouter)
+app.use('/api/progress',  progressRouter)
 
 app.get('/api/grammar',   (_req, res) => res.json([]))
 app.get('/api/dashboard', (_req, res) => res.json({ vocab: 0, phrases: 0, daysActive: 0 }))

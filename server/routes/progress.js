@@ -1,0 +1,56 @@
+import { Router } from 'express'
+import { resolve } from 'path'
+import { readFile, writeFile } from 'fs/promises'
+import { DATA_DIR } from '../services/markdown-store.js'
+
+const router = Router()
+const LOG_FILE = resolve(DATA_DIR, 'progress/log.md')
+
+// GET /api/progress
+router.get('/', async (_req, res) => {
+  try {
+    const content = await readFile(LOG_FILE, 'utf-8')
+    const lines = content.split('\n').filter(l => l.trim().startsWith('|'))
+    if (lines.length < 2) return res.json([])
+
+    const headers = lines[0].split('|').slice(1, -1).map(c => c.trim())
+    const rows = []
+
+    for (const line of lines.slice(2)) {
+      const cells = line.split('|').slice(1, -1).map(c => c.trim())
+      if (cells.length !== headers.length) continue
+      const obj = {}
+      headers.forEach((h, i) => { obj[h] = cells[i] })
+      rows.push(obj)
+    }
+
+    res.json(rows)
+  } catch (err) {
+    console.error('[progress GET]', err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// POST /api/progress
+router.post('/', async (req, res) => {
+  try {
+    const { mode, score, total, duration, notes = '' } = req.body
+
+    if (score == null || total == null || !mode) {
+      return res.status(400).json({ error: 'mode, score, and total are required' })
+    }
+
+    const date = new Date().toISOString().slice(0, 10)
+    const row = `| ${date} | ${mode} | ${score} | ${total} | ${duration ?? ''} | ${notes} |`
+
+    const content = await readFile(LOG_FILE, 'utf-8')
+    await writeFile(LOG_FILE, content.trimEnd() + '\n' + row + '\n', 'utf-8')
+
+    res.json({ ok: true })
+  } catch (err) {
+    console.error('[progress POST]', err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+export default router

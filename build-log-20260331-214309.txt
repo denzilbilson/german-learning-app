@@ -157,3 +157,36 @@ All modules load cleanly. Phase 4 is complete. Here's a summary of everything bu
 - `client/src/pages/Phrases.jsx` — Same pattern for phrases
 - `client/src/pages/TextAnalysis.jsx` — "Export to Anki" button in sticky action bar, passes `analysis.vocabulary` + `analysis.phrases` to the modal
 [0;32m[22:13:53][0m Committing Phase 4: Anki Export
+[0;32m[22:13:54][0m Phase 4 committed and pushed.
+[0;32m[22:13:54][0m Phase 4 complete.
+
+[0;32m[22:13:54][0m ============================================
+[0;32m[22:13:54][0m STARTING PHASE 5: Practice Modes
+[0;32m[22:13:54][0m Budget limit: $20
+[0;32m[22:13:54][0m ============================================
+Phase 5 is complete. Here's what was built:
+
+---
+
+### Files created
+
+**Backend**
+
+| File | What it does |
+|------|-------------|
+| `server/prompts/generate-practice.js` | `buildGeneratePrompt(mode, vocab, count)` — returns a `{ system, user }` prompt pair tailored to each of the 4 Claude-backed modes (quiz, fill-blank, case-drill, translation) |
+| `server/prompts/check-answer.js` | `CHECK_ANSWER_SYSTEM` + `buildCheckMessage()` — evaluates open-ended answers with mode-specific leniency rules (e.g. accept valid synonyms for translation, strict declension for case-drill) |
+| `server/routes/practice.js` | `POST /api/practice/generate` — flashcard returns shuffled vocab directly (no Claude); other modes call Claude and validate the response shape. `POST /api/practice/check` — proxies to Claude for fill-blank, case-drill, translation |
+| `server/routes/progress.js` | `GET /api/progress` + `POST /api/progress` — reads and appends rows to `data/progress/log.md` |
+
+**Frontend**
+
+| File | What it does |
+|------|-------------|
+| `client/src/components/PracticeCard.jsx` | Handles all 5 question types in one component. Flashcard = self-reporting flip card. Quiz = client-side check with A/B/C/D buttons. Fill-blank/Case-drill/Translation = text input that calls `api.checkAnswer` and displays Claude's feedback with model answer. Remounts cleanly on each question via `key={currentIdx}` |
+| `client/src/pages/Practice.jsx` | 4-phase state machine: `select → loading → session → summary`. Session shows a top progress bar and the centered PracticeCard. Summary shows score %, time, weak-word chips, and Practice Again / Change Mode buttons. Progress is logged silently after each session |
+
+**Updated**
+
+- `server/index.js` — practice and progress routers registered at `/api/practice` and `/api/progress`
+[0;32m[22:23:04][0m Committing Phase 5: Practice Modes
